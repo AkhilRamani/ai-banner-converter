@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { getFormFactor } from "@/lib/formats";
-import { convertImageAction, ConversionResult } from "@/lib/actions";
+import { convertImageAction, editImageWithInstructionAction, ConversionResult } from "@/lib/actions";
 
 export interface ImageConverterState {
   uploadedImage: string;
@@ -187,6 +187,73 @@ export const useImageConverter = () => {
     [state.uploadedFile, updateState]
   );
 
+  const retryConversionWithMessage = useCallback(
+    async (formatName: string, customMessage: string) => {
+      if (!state.uploadedFile) return;
+
+      // Get the existing converted image to use as the source for editing
+      const existingPreviewImage = state.previewImages[formatName];
+      if (!existingPreviewImage) {
+        console.error("No existing image found for editing");
+        return;
+      }
+
+      // Set loading state immediately
+      updateState((prevState) => ({
+        retryingFormats: new Set([...prevState.retryingFormats, formatName]),
+        conversionResults: { ...prevState.conversionResults },
+        previewImages: { ...prevState.previewImages },
+      }));
+
+      // Remove existing result and preview for this format
+      updateState((prevState) => {
+        const newConversionResults = { ...prevState.conversionResults };
+        delete newConversionResults[formatName];
+
+        const newPreviewImages = { ...prevState.previewImages };
+        delete newPreviewImages[formatName];
+
+        return {
+          conversionResults: newConversionResults,
+          previewImages: newPreviewImages,
+        };
+      });
+
+      try {
+        // Get the form factor for target dimensions
+        const formFactor = getFormFactor(formatName);
+        if (!formFactor) return;
+
+        // For editing with instructions, we need to convert the base64 image back to a File
+        // This is a simplified approach - in a real implementation, you might want to store the original file
+        const response = await fetch(existingPreviewImage);
+        const blob = await response.blob();
+        const file = new File([blob], "edited-image.png", { type: "image/png" });
+
+        const conversionResult = await editImageWithInstructionAction(file, customMessage.trim(), formFactor.width, formFactor.height);
+
+        // Update both conversion result and preview image atomically
+        updateState((prevState) => ({
+          conversionResults: { ...prevState.conversionResults, [formatName]: conversionResult },
+          previewImages:
+            conversionResult.success && conversionResult.imageUrl
+              ? { ...prevState.previewImages, [formatName]: conversionResult.imageUrl }
+              : prevState.previewImages,
+        }));
+      } catch (error) {
+        console.error("Error editing image with custom message:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
+        alert(`Error: ${errorMessage}`);
+      } finally {
+        // Clear loading state
+        updateState((prevState) => ({
+          retryingFormats: new Set([...prevState.retryingFormats].filter((f) => f !== formatName)),
+        }));
+      }
+    },
+    [state.uploadedFile, state.previewImages, updateState]
+  );
+
   const handleAddMoreFormats = useCallback(() => {
     // This function can be used to trigger the format selector dialog
     // The actual dialog opening is handled by the FormatSelectorDialog component
@@ -204,6 +271,7 @@ export const useImageConverter = () => {
     resetState,
     downloadImage,
     retryConversion,
+    retryConversionWithMessage,
 
     // Computed
     hasUploadedImage: !!state.uploadedFile,

@@ -5,7 +5,7 @@ export default function HomePage() {
   return (
     <>
       <Sidebar />
-      <div className="flex flex-col h-full p-8 ml-96 min-h-[90vh]">
+      <div className="flex-1 flex flex-col p-8 min-h-[90vh] bg-background/60 rounded-tl-2xl overflow-auto">
         <MainContent />
       </div>
     </>

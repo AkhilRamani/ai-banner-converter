@@ -18,13 +18,13 @@ const customButtonVariants = cva(
         secondary: "bg-secondary text-red-950 hover:bg-secondary/80- hover:bg-red-900/10",
         ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
-        main: "bg-red-900 text-white hover:bg-red-800 focus-visible:ring-red-800",
+        main: "bg-gradient-to-tr from-blue-600 to-blue-500 text-white hover:bg-blue-500 focus-visible:ring-blue-800 shadow-md",
       },
       size: {
         // Inherit all base button sizes
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-12 rounded-lg px-6 has-[>svg]:px-4",
+        lg: "h-12 rounded-lg px-6 has-[>svg]:px-4 [&_svg]:!stroke-[2.5px]",
         icon: "size-9",
       },
     },

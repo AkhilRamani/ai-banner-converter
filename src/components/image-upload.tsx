@@ -79,24 +79,35 @@ export function ImageUpload({ onImageUpload, onImageRemove, uploadedImage, isPro
       <div
         {...getRootProps()}
         className={cn(
-          "relative border  rounded-lg p-8 text-center transition-colors cursor-pointer shadow",
-          isDragActive || dragActive ? "border-blue-400 bg-blue-50" : "border-gray-300 hover:border-gray-400",
-          "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          "relative group rounded-2xl text-center transition-all duration-500 cursor-pointer",
+          "border min-h-[320px] flex flex-col justify-center hover:ring-4 ring-offset-1 ring-blue-500/10 bg-white",
+          "backdrop-blur-sm",
+          isDragActive || dragActive ? "border-blue-900" : "border-gray-300/60 hover:border-blue-900/50 hover:shadow-xl hover:shadow-gray-200/30",
+          "focus:outline-none focus:ring-4 focus:ring-blue-500/10"
         )}
       >
         <input {...getInputProps()} />
-        <div className="flex flex-col items-center gap-4">
-          <div className={cn("p-4 rounded-full", isDragActive || dragActive ? "bg-blue-100" : "bg-gray-100")}>
-            {isDragActive || dragActive ? <Upload className="w-8 h-8 text-blue-600" /> : <ImageIcon className="w-8 h-8 text-gray-600" />}
+
+        <div className="relative flex flex-col items-center gap-8 px-8">
+          {/* Simplified icon with elegant treatment */}
+          <div
+            className={cn(
+              "relative p-4 rounded-xl transition-all duration-500 !bg-gray-100 border",
+              isDragActive || dragActive ? "bg-white" : "bg-white group-hover:shadow-lg group-hover:shadow-gray-300/20 group-hover:scale-105"
+            )}
+          >
+            {isDragActive || dragActive ? <Upload className="size-8 opacity-80" /> : <ImageIcon className="size-8 opacity-80" />}
           </div>
-          <div>
-            <p className="text-lg font-medium text-gray-900">{isDragActive || dragActive ? "Drop your image here" : "Upload your design"}</p>
-            <p className="mt-1 text-sm text-gray-600">Drag and drop your Figma design here, or click to browse</p>
-            <p className="mt-2 text-xs text-gray-500">Supports PNG, JPG, JPEG, GIF, WebP up to 10MB</p>
+
+          {/* Clean typography hierarchy */}
+          <div className="space-y-4 text-center">
+            <h3 className={cn("text-xl font-medium tracking-tight transition-colors duration-300")}>
+              {isDragActive || dragActive ? "Drop your image here" : "Upload image or image"}
+            </h3>
+            <p className="text-gray-600 leading-relaxed max-w-md text-base">
+              {isDragActive || dragActive ? "Release to upload your design" : "Drag and drop or click to browse"}
+            </p>
           </div>
-          <Button type="button" variant="outline" className="mt-2">
-            Choose File
-          </Button>
         </div>
       </div>
     </div>

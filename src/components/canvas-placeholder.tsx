@@ -7,6 +7,7 @@ import { FormFactor, FORM_FACTORS_BY_PLATFORM } from "@/lib/formats";
 import { ConversionResult } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import { FormatSelectorDialog } from "./format-selector-dialog";
+import { RetryWithMessageDialog } from "./retry-with-message-dialog";
 import { ButtonCustom } from "./ui/custom/button-custom";
 
 interface PlatformIconProps {
@@ -43,6 +44,7 @@ interface PlaceholderBoxProps {
   isRetrying?: boolean;
   onDownload?: () => void;
   onRetry?: () => void;
+  onRetryWithMessage?: (message: string) => void;
   className?: string;
 }
 
@@ -54,11 +56,13 @@ const PlaceholderBox = ({
   isRetrying = false,
   onDownload,
   onRetry,
+  onRetryWithMessage,
   className,
 }: PlaceholderBoxProps) => {
   const aspectRatio = formFactor.width / formFactor.height;
   const isVeryWide = aspectRatio > 3;
   const isVeryTall = aspectRatio < 0.5;
+  const [isRetryDialogOpen, setIsRetryDialogOpen] = useState(false);
 
   if (previewImage) {
     return (
@@ -82,10 +86,29 @@ const PlaceholderBox = ({
         </div>
 
         <div className="absolute right-0 -bottom-9">
-          <ButtonCustom className="mt-2 w-7 h-7" variant="secondary" onClick={onRetry} title="Retry conversion">
+          <ButtonCustom
+            className="mt-2 w-7 h-7"
+            variant="secondary"
+            onClick={() => setIsRetryDialogOpen(true)}
+            title="Retry conversion with custom instructions"
+          >
             <RotateCcw className="size-3.5" />
           </ButtonCustom>
         </div>
+
+        {/* Retry with Message Dialog */}
+        <RetryWithMessageDialog
+          isOpen={isRetryDialogOpen}
+          onOpenChange={setIsRetryDialogOpen}
+          lastConvertedImage={previewImage}
+          formatName={formFactor.name}
+          onRetryWithMessage={(message) => {
+            onRetryWithMessage?.(message);
+            setIsRetryDialogOpen(false);
+          }}
+          isRetrying={isRetrying}
+          trigger={<div />}
+        />
       </div>
     );
   }
@@ -95,7 +118,7 @@ const PlaceholderBox = ({
     <div className={cn("overflow-hidden", className, (isConverting || isRetrying) && "animate-pulse duration-500")}>
       <div className="mb-4 text-sm font-medium text-center">{formFactor.name}</div>
       <div
-        className="relative flex flex-col items-center justify-center border border-red-900/15 bg-white/75"
+        className="relative flex flex-col items-center justify-center border bg-gradient-to-tr from-muted-foreground/10 to-muted-foreground/5 rounded-lg"
         style={{
           aspectRatio: `${formFactor.width}/${formFactor.height}`,
         }}
@@ -125,6 +148,7 @@ interface CanvasPlaceholderProps {
   retryingFormats: Set<string>;
   onDownload?: (formatName: string) => void;
   onRetry?: (formatName: string) => void;
+  onRetryWithMessage?: (formatName: string, message: string) => void;
   onFormatToggle?: (formatName: string) => void;
   onSelectComplete?: () => void;
   onBatchFormatUpdate?: (formatNames: string[]) => void;
@@ -139,6 +163,7 @@ export function CanvasPlaceholder({
   retryingFormats,
   onDownload,
   onRetry,
+  onRetryWithMessage,
   onFormatToggle,
   onSelectComplete,
   onBatchFormatUpdate,
@@ -166,12 +191,12 @@ export function CanvasPlaceholder({
       <div className="space-y-16">
         {Object.entries(formatsByPlatform).map(([platform, formats]) => (
           <div key={platform} className="space-y-8">
-            <div className="flex items-center gap-8 py-2 px-4 rounded-lg bg-white w-full max-w-[38rem] justify-between shadow-3xl shadow-red-900/5">
+            <div className="flex items-center gap-8 py-2 px-4 rounded-lg bg-white border w-full max-w-[38rem] justify-between shadow-3xl shadow-red-900/5">
               <div className="flex items-center gap-2 opacity-70">
                 <PlatformIcon platform={platform} />
                 <h3 className="text-base font-medium">{platform}</h3>
               </div>
-              <div className="flex items-center justify-center text-xs font-semibold pb-[1px] text-white bg-red-900 rounded-full size-5">
+              <div className="flex items-center justify-center text-xs font-semibold pb-[1px] text-white bg-blue-900 rounded-full size-5">
                 {formats.length}
               </div>
             </div>
@@ -187,6 +212,7 @@ export function CanvasPlaceholder({
                   isRetrying={retryingFormats.has(formFactor.name)}
                   onDownload={() => onDownload?.(formFactor.name)}
                   onRetry={() => onRetry?.(formFactor.name)}
+                  onRetryWithMessage={(message) => onRetryWithMessage?.(formFactor.name, message)}
                 />
               ))}
             </div>
@@ -199,7 +225,7 @@ export function CanvasPlaceholder({
         <Button
           onClick={() => setIsDialogOpen(true)}
           size="lg"
-          className="fixed z-50 transition-all duration-200 bg-red-900 rounded-full shadow-lg bottom-6 right-6 h-14 w-14 hover:shadow-xl hover:bg-red-950"
+          className="fixed z-50 transition-all duration-200 rounded-full shadow-lg bottom-6 right-6 h-14 w-14 hover:shadow-xl"
           title="Add more formats"
         >
           <Plus className="size-5" />

@@ -18,8 +18,8 @@ export function NavbarTop() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-gray-200/80 bg-white/80 backdrop-blur-md">
-      <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b- border-gray-200/80 bg-white/80- backdrop-blur-md">
+      <div className="px-4 mx-auto max-w-7xl- sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left Section - Logo/Brand */}
           <div className="flex items-center gap-4">
@@ -28,7 +28,7 @@ export function NavbarTop() {
                 <Wand className="w-5 h-5 text-white" />
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-lg font-semibold text-gray-900">BannerFix</h1>
+                <h1 className="text-lg font-semibold text-gray-900">Flexel</h1>
               </div>
             </Link>
           </div>

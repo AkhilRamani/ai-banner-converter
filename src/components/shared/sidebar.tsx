@@ -17,7 +17,7 @@ export function Sidebar() {
     resetState();
   };
   return (
-    <div className="fixed top-[4rem] left-0 h-[calc(100vh-4rem)] w-96 bg-white- border-r- border-gray-200 overflow-hidden z-10 bg-gradient-to-tr from-white/ to-white/70">
+    <div className="h-[calc(100vh-4rem)]- w-96">
       <div className="flex flex-col justify-between h-full p-6">
         <div>
           <ImageUpload
