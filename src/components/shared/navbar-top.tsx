@@ -4,9 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu, X, Home, Wand2, ChevronDown, Wand } from "lucide-react";
+import { Menu, X, Home, Wand2, Wand } from "lucide-react";
+import { useAuth } from "@workos-inc/authkit-nextjs/components";
 
 export function NavbarTop() {
+  const { user, signOut } = useAuth();
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
@@ -53,20 +56,18 @@ export function NavbarTop() {
           <div className="flex items-center gap-3">
             {/* User Menu (Desktop) */}
             <div className="hidden sm:block">
-              <Button
-                variant="ghost"
-                className="flex items-center gap-2 px-3"
-                onClick={() => {
-                  // TODO: Implement user menu or navigation
-                  console.log("User menu clicked");
-                }}
-              >
-                <Avatar className="h-7 w-7">
-                  <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
-                  <AvatarFallback className="text-xs text-primary bg-muted-foreground/20">JD</AvatarFallback>
-                </Avatar>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              </Button>
+              {!user ? (
+                <Link href="/api/sign-in">
+                  <Button size="sm">Sign In</Button>
+                </Link>
+              ) : (
+                <Button variant="ghost" className="flex items-center gap-2 px-3">
+                  <Avatar className="size-8">
+                    <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
+                    <AvatarFallback className="text-xs text-primary bg-muted-foreground/20">JD</AvatarFallback>
+                  </Avatar>
+                </Button>
+              )}
             </div>
 
             {/* Mobile Menu Toggle */}
