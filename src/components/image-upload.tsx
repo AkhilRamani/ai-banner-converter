@@ -83,7 +83,8 @@ export function ImageUpload({ onImageUpload, onImageRemove, uploadedImage, isPro
           "border min-h-[320px] flex flex-col justify-center hover:ring-4 ring-offset-1 ring-blue-500/10 bg-white",
           "backdrop-blur-sm",
           isDragActive || dragActive ? "border-blue-900" : "border-gray-300/60 hover:border-blue-900/50 hover:shadow-xl hover:shadow-gray-200/30",
-          "focus:outline-none focus:ring-4 focus:ring-blue-500/10"
+          "focus:outline-none focus:ring-4 focus:ring-blue-500/10",
+          "bg-neutral-50/50"
         )}
       >
         <input {...getInputProps()} />
@@ -92,19 +93,21 @@ export function ImageUpload({ onImageUpload, onImageRemove, uploadedImage, isPro
           {/* Simplified icon with elegant treatment */}
           <div
             className={cn(
-              "relative p-4 rounded-xl transition-all duration-500 !bg-gray-100 border",
+              "relative p-4 rounded-xl transition-all duration-500 bg-white border",
               isDragActive || dragActive ? "bg-white" : "bg-white group-hover:shadow-lg group-hover:shadow-gray-300/20 group-hover:scale-105"
             )}
           >
-            {isDragActive || dragActive ? <Upload className="size-8 opacity-80" /> : <ImageIcon className="size-8 opacity-80" />}
+            {isDragActive || dragActive ? (
+              <Upload className="size-8 opacity-50 stroke-[1.5px]" />
+            ) : (
+              <ImageIcon className="size-8 opacity-50 stroke-[1.5px]" />
+            )}
           </div>
 
           {/* Clean typography hierarchy */}
-          <div className="space-y-4 text-center">
-            <h3 className={cn("text-xl font-medium tracking-tight transition-colors duration-300")}>
-              {isDragActive || dragActive ? "Drop your image here" : "Upload image or image"}
-            </h3>
-            <p className="text-gray-600 leading-relaxed max-w-md text-base">
+          <div className="space-y-1 text-center">
+            <h3 className={cn("text-lg font-medium")}>{isDragActive || dragActive ? "Drop your image here" : "Upload design image"}</h3>
+            <p className="max-w-md text-sm opacity-60">
               {isDragActive || dragActive ? "Release to upload your design" : "Drag and drop or click to browse"}
             </p>
           </div>

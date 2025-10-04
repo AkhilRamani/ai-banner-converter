@@ -14,7 +14,7 @@ const customButtonVariants = cva(
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 text-primary",
         secondary: "bg-secondary text-red-950 hover:bg-secondary/80- hover:bg-red-900/10",
         ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
@@ -22,9 +22,9 @@ const customButtonVariants = cva(
       },
       size: {
         // Inherit all base button sizes
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        default: "h-9 px-4 py-2 has-[>svg]:px-3 [&_svg]:!stroke-[2.5px]",
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-12 rounded-lg px-6 has-[>svg]:px-4 [&_svg]:!stroke-[2.5px]",
+        lg: "h-12 rounded-lg px-6 has-[>svg]:px-4 [&_svg]:!stroke-[2.5px] text-base",
         icon: "size-9",
       },
     },

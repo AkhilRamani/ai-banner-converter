@@ -1,34 +1,43 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+// Reusable validators
+export const platformValidator = v.union(
+  v.literal("instagram"),
+  v.literal("facebook"),
+  v.literal("linkedin"),
+  v.literal("x"),
+  v.literal("google"),
+  v.literal("youtube"),
+  v.literal("email"),
+  v.literal("website"),
+  v.literal("pinterest")
+);
+
+export const formatResultStatusValidator = v.union(v.literal("pending"), v.literal("processing"), v.literal("completed"), v.literal("failed"));
+
 export default defineSchema({
   conversions: defineTable({
-    id: v.string(),
+    userId: v.string(), // Required for authentication
     originalImageUrl: v.string(),
     originalFileName: v.string(),
     originalFileSize: v.number(),
-    errorMessage: v.optional(v.string()),
-    userId: v.optional(v.string()), // For future multi-user support
-  }).index("by_user", ["userId"]),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user", { fields: ["userId"] }),
 
   formatResults: defineTable({
-    id: v.string(),
     conversionId: v.id("conversions"),
-    platform: v.string(), // e.g., 'instagram', 'facebook', 'twitter'
-    format: v.string(), // e.g., '1080x1080', '1200x630'
-    status: v.union(v.literal("pending"), v.literal("processing"), v.literal("completed"), v.literal("failed")),
-    r2Key: v.optional(v.string()), // Path in R2 storage
-    r2Url: v.optional(v.string()), // Public URL for the converted image
+    platform: platformValidator,
+    format: v.string(),
+    status: formatResultStatusValidator,
+    r2Key: v.optional(v.string()),
+    r2Url: v.optional(v.string()),
     width: v.optional(v.number()),
     height: v.optional(v.number()),
-    version: v.number(), // For retry functionality
-    errorMessage: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
   })
-    .index("by_conversion", ["conversionId"])
-    .index("by_status", ["status"])
-    .index("by_conversion_and_format", ["conversionId", "platform", "format"])
-    .searchIndex("search_format", {
-      searchField: "format",
-      filterFields: ["platform", "status"],
-    }),
+    .index("by_conversion", { fields: ["conversionId"] })
+    .index("by_status", { fields: ["status"] }),
 });

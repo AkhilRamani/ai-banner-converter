@@ -1,7 +1,26 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { Doc, Id } from "./_generated/dataModel";
+import { platformValidator, formatResultStatusValidator } from "./schema";
 
-// Image Upload Function
+// Helper function to get authenticated user ID
+const requireAuth = async (ctx: any) => {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new Error("Not authenticated");
+  return identity.subject;
+};
+
+// Helper function to verify conversion ownership
+const requireConversionOwnership = async (ctx: any, conversionId: Id<"conversions">) => {
+  const userId = await requireAuth(ctx);
+  const conversion = await ctx.db.get(conversionId);
+  if (!conversion || conversion.userId !== userId) {
+    throw new Error("Access denied");
+  }
+  return conversion;
+};
+
+// Image Upload Function (Authentication Required)
 export const uploadImage = mutation({
   args: {
     originalImageUrl: v.string(),
@@ -9,80 +28,84 @@ export const uploadImage = mutation({
     originalFileSize: v.number(),
   },
   handler: async (ctx, args) => {
-    const id = crypto.randomUUID();
+    const userId = await requireAuth(ctx);
+    const now = Date.now();
 
     return await ctx.db.insert("conversions", {
-      id,
+      userId,
       originalImageUrl: args.originalImageUrl,
       originalFileName: args.originalFileName,
       originalFileSize: args.originalFileSize,
+      createdAt: now,
+      updatedAt: now,
     });
   },
 });
 
-// Get all conversions for a user (or all if no user filter)
+// Get current user's conversions (Authentication Required)
 export const getConversions = query({
-  args: { userId: v.optional(v.string()) },
+  args: {
+    limit: v.optional(v.number()),
+  },
   handler: async (ctx, args) => {
-    if (args.userId) {
-      return await ctx.db
-        .query("conversions")
-        .filter((q) => q.eq(q.field("userId"), args.userId))
-        .collect();
-    }
-    return await ctx.db.query("conversions").collect();
+    const userId = await requireAuth(ctx);
+
+    const results = await ctx.db
+      .query("conversions")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    return args.limit ? results.slice(0, args.limit) : results;
   },
 });
 
 // Get a specific conversion by ID
 export const getConversion = query({
-  args: { conversionId: v.string() },
+  args: { conversionId: v.id("conversions") },
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("conversions")
-      .filter((q) => q.eq(q.field("id"), args.conversionId))
-      .first();
+    const userId = await requireAuth(ctx);
+
+    const conversion = await ctx.db.get(args.conversionId);
+
+    if (!conversion || conversion.userId !== userId) {
+      throw new Error("Access denied");
+    }
+
+    return conversion;
   },
 });
 
 // Create a new format conversion
 export const createFormatConversion = mutation({
   args: {
-    conversionId: v.string(),
-    platform: v.string(),
+    conversionId: v.id("conversions"),
+    platform: platformValidator,
     format: v.string(),
   },
   handler: async (ctx, args) => {
-    // Get the latest version for this conversion and format
-    const existingFormats = await ctx.db
-      .query("formatResults")
-      .filter((q) =>
-        q.and(q.eq(q.field("conversionId"), args.conversionId as any), q.eq(q.field("platform"), args.platform), q.eq(q.field("format"), args.format))
-      )
-      .collect();
-
-    const nextVersion = existingFormats.length > 0 ? Math.max(...existingFormats.map((f) => f.version)) + 1 : 1;
-
-    const id = crypto.randomUUID();
+    const userId = await requireAuth(ctx);
+    const now = Date.now();
 
     return await ctx.db.insert("formatResults", {
-      id,
-      conversionId: args.conversionId as any,
+      conversionId: args.conversionId,
       platform: args.platform,
       format: args.format,
       status: "pending",
-      version: nextVersion,
+      createdAt: now,
+      updatedAt: now,
     });
   },
 });
 
 // Get format conversions for a specific conversion
 export const getFormatConversions = query({
-  args: { conversionId: v.string() },
+  args: { conversionId: v.id("conversions") },
   handler: async (ctx, args) => {
+    await requireConversionOwnership(ctx, args.conversionId);
+
     return await ctx.db
       .query("formatResults")
-      .filter((q) => q.eq(q.field("conversionId"), args.conversionId as any))
+      .filter((q) => q.eq(q.field("conversionId"), args.conversionId))
       .collect();
   },
 });
@@ -90,40 +113,44 @@ export const getFormatConversions = query({
 // Update format conversion status and details
 export const updateFormatConversion = mutation({
   args: {
-    formatId: v.string(),
-    status: v.optional(v.union(v.literal("pending"), v.literal("processing"), v.literal("completed"), v.literal("failed"))),
+    formatId: v.id("formatResults"),
+    status: v.optional(formatResultStatusValidator),
     r2Key: v.optional(v.string()),
     r2Url: v.optional(v.string()),
     width: v.optional(v.number()),
     height: v.optional(v.number()),
-    errorMessage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { formatId, ...updates } = args;
 
-    await ctx.db.patch(formatId as any, updates);
+    // Get the format result to verify ownership
+    const formatResult = await ctx.db.get(formatId);
+    if (!formatResult) {
+      throw new Error("Format result not found");
+    }
+
+    // Verify the user owns the conversion this format result belongs to
+    await requireConversionOwnership(ctx, formatResult.conversionId);
+
+    await ctx.db.patch(formatId, { ...updates, updatedAt: Date.now() });
   },
 });
 
 // Delete a format conversion
 export const deleteFormatConversion = mutation({
   args: {
-    formatId: v.string(),
+    formatId: v.id("formatResults"),
   },
   handler: async (ctx, args) => {
-    await ctx.db.delete(args.formatId as any);
-  },
-});
+    // Get the format result to verify ownership
+    const formatResult = await ctx.db.get(args.formatId);
+    if (!formatResult) {
+      throw new Error("Format result not found");
+    }
 
-// Get format conversions by status
-export const getFormatConversionsByStatus = query({
-  args: {
-    status: v.union(v.literal("pending"), v.literal("processing"), v.literal("completed"), v.literal("failed")),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("formatResults")
-      .filter((q) => q.eq(q.field("status"), args.status))
-      .collect();
+    // Verify the user owns the conversion this format result belongs to
+    await requireConversionOwnership(ctx, formatResult.conversionId);
+
+    await ctx.db.delete(args.formatId);
   },
 });
