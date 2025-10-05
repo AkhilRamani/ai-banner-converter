@@ -66,9 +66,9 @@ export const convertImageAspectRatio = async (sourceImageFile: File, options: Co
     // Build base prompt
     const basePrompt = `Can you analyse first marketing cover image and convert that into attached second picture as the reference for final aspect ratio. Use second image as a template fill in.
 Make sure design language remains intact, prefer to avoid blank spaces and feel free to move around objects as needed.
-This query is to changing aspect ratio formate of original image as graphics designer would redesign/reorganise it.
-If source and target image differs in vertical and horizontal then try to organise objects as target aspect ratio example vertically or horizontally.
-Do not repeat texts again. Keep proper consistant spacing/padding around texts from edges for visual balance. Remove text line breaks and extend when needed to fill extra space.
+This query is to changing aspect ratio of original image as graphics designer would redesign/reorganise it.
+If source and target image differs in vertical and horizontal then try to organise objects in target image space example vertically or horizontally.
+Do not repeat or duplicate texts. Keep proper consistant spacing/padding around texts from edges for visual balance. Remove text line breaks and extend when needed to fill extra space.
 Understand the image content composition and try to keep the same feel as original image. Prefer to do not destruct main objects but organise to utilize available space and minimise empty same color areas without repeating.`;
 
     // Add custom message if provided
