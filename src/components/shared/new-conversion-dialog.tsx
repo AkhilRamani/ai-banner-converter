@@ -1,45 +1,56 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Upload } from "lucide-react";
+
+import { Dialog, DialogTrigger } from "../ui/dialog";
 import { ButtonCustom } from "../ui/custom/button-custom";
-import { Upload, Loader2 } from "lucide-react";
 import { ImageUpload } from "../image-upload";
-import { useImageConverterContext } from "@/lib/hooks/use-image-converter-context";
 import { DialogContentCustom } from "../ui/custom/dialog-custom";
+import { useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 export const NewConversionDialog = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
-  const { setImageUpload } = useImageConverterContext();
+
+  const generateUploadUrl = useMutation(api.r2.generateUploadUrl);
+  const syncMetadata = useMutation(api.r2.syncMetadata);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleImageSelection = (file: File, preview: string) => {
+  const handleImageSelection = (file: File) => {
     setSelectedFile(file);
-    setSelectedImage(preview);
   };
 
   const handleImageRemove = () => {
     setSelectedFile(null);
-    setSelectedImage(null);
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !selectedImage) return;
-
+    if (!selectedFile) return;
     setIsUploading(true);
-
     try {
-      // Placeholder for upload logic - to be implemented later
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate upload delay
+      const uploadData = await generateUploadUrl({ fileName: selectedFile.name });
 
-      // Set the image in context after successful upload
-      setImageUpload(selectedFile, selectedImage);
-      setIsDialogOpen(false);
+      // Upload file directly to R2 using the signed URL
+      const response = await fetch(uploadData.url, {
+        method: "PUT",
+        body: selectedFile,
+        headers: {
+          "Content-Type": selectedFile.type,
+        },
+      });
 
-      // Navigate to convert page after uploading
-      router.push("/convert");
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+
+      // Call syncMetadata to trigger the onUpload callback
+      await syncMetadata({
+        key: uploadData.key,
+      });
+
+      router.push(`/convert/${uploadData.conversionId}`);
     } catch (error) {
       console.error("Upload failed:", error);
     } finally {
@@ -54,7 +65,7 @@ export const NewConversionDialog = ({ children }: { children: React.ReactNode })
         <ImageUpload
           onImageUpload={handleImageSelection}
           onImageRemove={handleImageRemove}
-          uploadedImage={selectedImage || undefined}
+          uploadedImage={selectedFile ? URL.createObjectURL(selectedFile) : undefined}
           isProcessing={isUploading}
         />
 
@@ -62,21 +73,11 @@ export const NewConversionDialog = ({ children }: { children: React.ReactNode })
           <ButtonCustom variant="outline" className="w-28" onClick={() => setIsDialogOpen(false)} disabled={isUploading}>
             Cancel
           </ButtonCustom>
-          <ButtonCustom variant="main" className="w-28" onClick={handleUpload} disabled={!selectedImage || isUploading}>
-            {isUploading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <Upload className="w-4 h-4 mr-2" />
-                Upload
-              </>
-            )}
+          <ButtonCustom variant="main" className="w-28" onClick={handleUpload} disabled={!selectedFile || isUploading} loading={isUploading}>
+            <Upload className="w-4 h-4 mr-2" />
+            Upload
           </ButtonCustom>
         </div>
-        {/* </div> */}
       </DialogContentCustom>
     </Dialog>
   );

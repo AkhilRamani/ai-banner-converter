@@ -175,4 +175,19 @@ For support and questions:
 - [ ] User accounts and project management
 - [ ] API integration for automated workflows
 - [ ] Mobile app companion
+
 # ai-banner-converter
+
+## Authentication Setup
+
+This project uses WorkOS AuthKit + Convex.
+
+### Required Configuration:
+
+1. **WorkOS JWT Template** (in WorkOS Dashboard → JWT Templates):
+
+```json
+{
+  "aud": "workos client id"
+}
+```

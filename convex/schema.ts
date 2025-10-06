@@ -19,10 +19,9 @@ export const formatResultStatusValidator = v.union(v.literal("pending"), v.liter
 export default defineSchema({
   conversions: defineTable({
     userId: v.string(), // Required for authentication
-    originalImageUrl: v.string(),
-    originalFileName: v.string(),
-    originalFileSize: v.number(),
-    createdAt: v.number(),
+    fileName: v.string(),
+    fileSize: v.number(),
+    isUploadPending: v.boolean(),
     updatedAt: v.number(),
   }).index("by_user", { fields: ["userId"] }),
 

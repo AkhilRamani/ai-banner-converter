@@ -2,45 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Doc, Id } from "./_generated/dataModel";
 import { platformValidator, formatResultStatusValidator } from "./schema";
-
-// Helper function to get authenticated user ID
-const requireAuth = async (ctx: any) => {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) throw new Error("Not authenticated");
-  return identity.subject;
-};
-
-// Helper function to verify conversion ownership
-const requireConversionOwnership = async (ctx: any, conversionId: Id<"conversions">) => {
-  const userId = await requireAuth(ctx);
-  const conversion = await ctx.db.get(conversionId);
-  if (!conversion || conversion.userId !== userId) {
-    throw new Error("Access denied");
-  }
-  return conversion;
-};
-
-// Image Upload Function (Authentication Required)
-export const uploadImage = mutation({
-  args: {
-    originalImageUrl: v.string(),
-    originalFileName: v.string(),
-    originalFileSize: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx);
-    const now = Date.now();
-
-    return await ctx.db.insert("conversions", {
-      userId,
-      originalImageUrl: args.originalImageUrl,
-      originalFileName: args.originalFileName,
-      originalFileSize: args.originalFileSize,
-      createdAt: now,
-      updatedAt: now,
-    });
-  },
-});
+import { requireAuth, requireConversionOwnership } from "./auth";
 
 // Get current user's conversions (Authentication Required)
 export const getConversions = query({
@@ -122,7 +84,6 @@ export const updateFormatConversion = mutation({
   },
   handler: async (ctx, args) => {
     const { formatId, ...updates } = args;
-
     // Get the format result to verify ownership
     const formatResult = await ctx.db.get(formatId);
     if (!formatResult) {
@@ -132,7 +93,10 @@ export const updateFormatConversion = mutation({
     // Verify the user owns the conversion this format result belongs to
     await requireConversionOwnership(ctx, formatResult.conversionId);
 
-    await ctx.db.patch(formatId, { ...updates, updatedAt: Date.now() });
+    await ctx.db.patch(formatId, {
+      ...updates,
+      updatedAt: Date.now(),
+    });
   },
 });
 
