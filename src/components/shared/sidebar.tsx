@@ -1,31 +1,32 @@
 "use client";
 
-import { ImageUpload } from "@/components/image-upload";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Wand, Wand2 } from "lucide-react";
+import { Wand } from "lucide-react";
 import { useImageConverterContext } from "@/lib/hooks/use-image-converter-context";
 import { ButtonCustom } from "../ui/custom/button-custom";
+import Image from "next/image";
+import { Doc } from "../../../convex/_generated/dataModel";
 
-export function Sidebar() {
+// Extended type for conversion with signed URL
+type ConversionWithSignedUrl = Doc<"conversions"> & {
+  signedUrl: string;
+};
+
+export function Sidebar({ conversion }: { conversion?: ConversionWithSignedUrl | null }) {
   const { uploadedImage, selectedFormats, isProcessing, setImageUpload, resetState, handleConvertSelected } = useImageConverterContext();
 
-  const handleImageUpload = (file: File, preview: string) => {
-    setImageUpload(file, preview);
-  };
-
-  const handleImageRemove = () => {
-    resetState();
-  };
   return (
-    <div className="h-[calc(100vh-4rem)]- w-96">
+    <div className="h-[calc(100vh-4rem)] w-96">
       <div className="flex flex-col justify-between h-full p-6">
         <div>
-          <ImageUpload
-            onImageUpload={handleImageUpload}
-            onImageRemove={handleImageRemove}
-            uploadedImage={uploadedImage}
-            isProcessing={isProcessing}
-          />
+          {conversion?.signedUrl && (
+            <Image
+              src={conversion.signedUrl}
+              alt="Uploaded conversion"
+              width={500}
+              height={300}
+              className="object-contain rounded-lg shadow-lg shadow-primary-50"
+            />
+          )}
         </div>
 
         {uploadedImage && (

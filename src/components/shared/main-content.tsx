@@ -8,7 +8,11 @@ import { ButtonCustom } from "@/components/ui/custom/button-custom";
 import { useImageConverterContext } from "@/lib/hooks/use-image-converter-context";
 import Image from "next/image";
 
-export function MainContent() {
+interface MainContentProps {
+  conversionId?: string;
+}
+
+export function MainContent({ conversionId }: MainContentProps = {}) {
   const {
     selectedFormats,
     conversionResults,
