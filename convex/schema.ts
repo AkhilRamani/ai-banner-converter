@@ -25,7 +25,7 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_user", { fields: ["userId"] }),
 
-  formatResults: defineTable({
+  conversionResults: defineTable({
     conversionId: v.id("conversions"),
     platform: platformValidator,
     format: v.string(),

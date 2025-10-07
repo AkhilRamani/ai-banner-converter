@@ -4,8 +4,8 @@ import { Doc, Id } from "./_generated/dataModel";
 import { platformValidator, formatResultStatusValidator } from "./schema";
 import { requireAuth, requireConversionOwnership } from "./auth";
 
-// Create a new format conversion
-export const createFormatConversion = mutation({
+// Create a new conversion result
+export const createConversionResult = mutation({
   args: {
     conversionId: v.id("conversions"),
     platform: platformValidator,
@@ -15,7 +15,7 @@ export const createFormatConversion = mutation({
     const userId = await requireAuth(ctx);
     const now = Date.now();
 
-    return await ctx.db.insert("formatResults", {
+    return await ctx.db.insert("conversionResults", {
       conversionId: args.conversionId,
       platform: args.platform,
       format: args.format,
@@ -26,23 +26,23 @@ export const createFormatConversion = mutation({
   },
 });
 
-// Get format conversions for a specific conversion
-export const getFormatConversions = query({
+// Get conversion results for a specific conversion
+export const getConversionResults = query({
   args: { conversionId: v.id("conversions") },
   handler: async (ctx, args) => {
     await requireConversionOwnership(ctx, args.conversionId);
 
     return await ctx.db
-      .query("formatResults")
+      .query("conversionResults")
       .filter((q) => q.eq(q.field("conversionId"), args.conversionId))
       .collect();
   },
 });
 
-// Update format conversion status and details
-export const updateFormatConversion = mutation({
+// Update conversion result status and details
+export const updateConversionResult = mutation({
   args: {
-    formatId: v.id("formatResults"),
+    formatId: v.id("conversionResults"),
     status: v.optional(formatResultStatusValidator),
     r2Key: v.optional(v.string()),
     r2Url: v.optional(v.string()),
@@ -67,10 +67,10 @@ export const updateFormatConversion = mutation({
   },
 });
 
-// Delete a format conversion
-export const deleteFormatConversion = mutation({
+// Delete a conversion result
+export const deleteConversionResult = mutation({
   args: {
-    formatId: v.id("formatResults"),
+    formatId: v.id("conversionResults"),
   },
   handler: async (ctx, args) => {
     // Get the format result to verify ownership
