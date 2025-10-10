@@ -1,31 +1,74 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { getFormFactor } from "@/lib/formats";
-import { convertImageAction, editImageWithInstructionAction, ConversionResult } from "@/lib/actions";
+import { editImageWithInstructionAction, ConversionResult } from "@/lib/actions";
+import { convertImageWithConvex } from "@/lib/conversionActions";
+import { Doc } from "../../../convex/_generated/dataModel";
+
+// Extended conversion result type that includes signedUrl from the mutation
+export type ConversionResultWithSignedUrl = Doc<"conversionResults"> & { signedUrl?: string };
+
+// Extended conversion type that includes signedUrl from the query
+export type ConversionWithSignedUrl = Doc<"conversions"> & { signedUrl?: string };
+
+export interface UseImageConverterProps {
+  conversion?: ConversionWithSignedUrl;
+  conversionResults?: ConversionResultWithSignedUrl[];
+  conversionId?: string;
+}
 
 export interface ImageConverterState {
-  uploadedImage: string;
-  uploadedFile: File | null;
-  selectedFormats: string[];
   conversionResults: Record<string, ConversionResult>;
-  previewImages: Record<string, string | undefined>;
-  isProcessing: boolean;
-  retryingFormats: Set<string>;
+  processingFormats: Set<string>;
+  selectedFormats: string[];
 }
 
 const createInitialState = (): ImageConverterState => ({
-  uploadedImage: "",
-  uploadedFile: null,
-  selectedFormats: [],
   conversionResults: {},
-  previewImages: {},
-  isProcessing: false,
-  retryingFormats: new Set(),
+  processingFormats: new Set(),
+  selectedFormats: [],
 });
 
-export const useImageConverter = () => {
+export const useImageConverter = ({ conversion, conversionResults, conversionId }: UseImageConverterProps = {}) => {
   const [state, setState] = useState<ImageConverterState>(createInitialState());
+
+  // Initialize state from provided conversion results
+  useEffect(() => {
+    if (conversionResults && conversionResults.length > 0) {
+      const conversionResultsMap: Record<string, ConversionResult> = {};
+      const existingFormats = new Set<string>();
+
+      conversionResults.forEach((result) => {
+        const formatName = result.format;
+        existingFormats.add(formatName);
+
+        if (result.status === "completed") {
+          // Use signedUrl if available
+          const imageUrl = (result as any).signedUrl;
+          if (imageUrl) {
+            conversionResultsMap[formatName] = {
+              success: true,
+              imageUrl,
+            };
+          }
+        } else if (result.status === "failed") {
+          conversionResultsMap[formatName] = {
+            success: false,
+            error: "Conversion failed",
+          };
+        }
+      });
+
+      console.log("🔄 useImageConverter: Updating conversion results:", conversionResultsMap);
+
+      setState((prevState) => ({
+        ...prevState,
+        conversionResults: conversionResultsMap,
+        selectedFormats: Array.from(existingFormats),
+      }));
+    }
+  }, [conversionResults]);
 
   const updateState = useCallback((updates: Partial<ImageConverterState> | ((prev: ImageConverterState) => Partial<ImageConverterState>)) => {
     setState((prev) => {
@@ -34,144 +77,172 @@ export const useImageConverter = () => {
     });
   }, []);
 
-  const resetState = useCallback(() => {
-    setState(createInitialState());
-  }, []);
-
-  const setImageUpload = useCallback(
-    (file: File, preview: string) => {
-      updateState({
-        uploadedImage: preview,
-        uploadedFile: file,
-        selectedFormats: [],
-        conversionResults: {},
-        previewImages: {},
-        retryingFormats: new Set(),
-      });
-    },
-    [updateState]
-  );
-
-  const toggleFormatSelection = useCallback(
-    (formatName: string) => {
-      updateState({
-        selectedFormats: state.selectedFormats.includes(formatName)
-          ? state.selectedFormats.filter((f) => f !== formatName)
-          : [...state.selectedFormats, formatName],
-      });
-    },
-    [state.selectedFormats, updateState]
-  );
-
-  const setFormatSelections = useCallback(
-    (formatNames: string[]) => {
-      updateState({
-        selectedFormats: formatNames,
-      });
-    },
-    [updateState]
-  );
-
   const downloadImage = useCallback(
     (formatName: string) => {
-      const previewImage = state.previewImages[formatName];
-      if (previewImage) {
+      const conversionResult = state.conversionResults[formatName];
+      if (conversionResult?.success && conversionResult.imageUrl) {
         const link = document.createElement("a");
-        link.href = previewImage;
+        link.href = conversionResult.imageUrl;
         link.download = `${formatName.replace(/\s+/g, "_").toLowerCase()}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
       }
     },
-    [state.previewImages]
+    [state.conversionResults]
   );
 
-  const convertSelectedFormats = useCallback(async () => {
-    if (!state.uploadedFile || state.selectedFormats.length === 0) return;
-
-    updateState({ isProcessing: true });
-
-    try {
-      // Only process unconverted formats
-      const unconvertedFormats = state.selectedFormats.filter((formatName) => !state.conversionResults[formatName]);
-
-      for (const formatName of unconvertedFormats) {
-        const formFactor = getFormFactor(formatName);
-        if (formFactor) {
-          const conversionResult = await convertImageAction(state.uploadedFile!, {
-            targetFormat: formatName,
-            targetWidth: formFactor.width,
-            targetHeight: formFactor.height,
-          });
-
-          // Update both conversion result and preview image atomically
-          updateState((prevState) => ({
-            conversionResults: { ...prevState.conversionResults, [formatName]: conversionResult },
-            previewImages:
-              conversionResult.success && conversionResult.imageUrl
-                ? { ...prevState.previewImages, [formatName]: conversionResult.imageUrl }
-                : prevState.previewImages,
-          }));
-        }
-      }
-    } catch (error) {
-      console.error("Error processing images:", error);
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
-      alert(`Error: ${errorMessage}`);
-    } finally {
-      updateState({ isProcessing: false });
-    }
-  }, [state.uploadedFile, state.selectedFormats, updateState]);
-
-  const handleFormatDialogComplete = useCallback(() => {
-    if (state.selectedFormats.length > 0) {
-      convertSelectedFormats();
-    }
-  }, [state.selectedFormats, convertSelectedFormats]);
-
-  const retryConversion = useCallback(
+  const convertSingleFormat = useCallback(
     async (formatName: string) => {
-      if (!state.uploadedFile) return;
+      // Use conversionId from props or from conversion data
+      const actualConversionId = conversionId || conversion?._id;
 
+      if (!actualConversionId) {
+        console.log("❌ convertSingleFormat: Missing conversionId", {
+          conversionId,
+          conversionIdFromData: conversion?._id,
+        });
+        return;
+      }
+
+      // For resolution-based formats like "1080x1920", extract width and height
+      const resolutionMatch = formatName.match(/^(\d+)x(\d+)$/);
+      let targetWidth = 1080;
+      let targetHeight = 1080;
+      let platform = "unknown";
+
+      if (resolutionMatch) {
+        targetWidth = parseInt(resolutionMatch[1], 10);
+        targetHeight = parseInt(resolutionMatch[2], 10);
+      }
+
+      // Try to find the formFactor for platform detection
       const formFactor = getFormFactor(formatName);
-      if (!formFactor) return;
+      if (formFactor) {
+        platform = formFactor.platform;
+      }
 
       // Set loading state immediately
       updateState((prevState) => ({
-        retryingFormats: new Set([...prevState.retryingFormats, formatName]),
+        processingFormats: new Set([...prevState.processingFormats, formatName]),
         conversionResults: { ...prevState.conversionResults },
-        previewImages: { ...prevState.previewImages },
       }));
 
-      // Remove existing result and preview for this format
+      // Remove existing result for this format
       updateState((prevState) => {
         const newConversionResults = { ...prevState.conversionResults };
         delete newConversionResults[formatName];
 
-        const newPreviewImages = { ...prevState.previewImages };
-        delete newPreviewImages[formatName];
-
         return {
           conversionResults: newConversionResults,
-          previewImages: newPreviewImages,
         };
       });
 
       try {
-        const conversionResult = await convertImageAction(state.uploadedFile!, {
-          targetFormat: formatName,
-          targetWidth: formFactor.width,
-          targetHeight: formFactor.height,
-        });
+        console.log("🚀 convertSingleFormat: Making API call for", formatName);
 
-        // Update both conversion result and preview image atomically
+        // Use the signed URL from conversion data if available
+        const signedUrlToUse = conversion?.signedUrl;
+
+        if (!signedUrlToUse) {
+          throw new Error("No signed URL available for conversion");
+        }
+
+        const conversionResult = await convertImageWithConvex(
+          {
+            platform,
+            format: formatName,
+            targetFormat: formatName,
+            targetWidth,
+            targetHeight,
+            signedUrl: signedUrlToUse,
+          },
+          actualConversionId
+        );
+
+        console.log("✅ convertSingleFormat: API call completed for", formatName, conversionResult);
+
+        // Update conversion result
         updateState((prevState) => ({
           conversionResults: { ...prevState.conversionResults, [formatName]: conversionResult },
-          previewImages:
-            conversionResult.success && conversionResult.imageUrl
-              ? { ...prevState.previewImages, [formatName]: conversionResult.imageUrl }
-              : prevState.previewImages,
+        }));
+      } catch (error) {
+        console.error("❌ convertSingleFormat: Error converting format:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
+        alert(`Error: ${errorMessage}`);
+      } finally {
+        // Clear loading state
+        updateState((prevState) => ({
+          processingFormats: new Set([...prevState.processingFormats].filter((f) => f !== formatName)),
+        }));
+      }
+    },
+    [conversionId, conversion, updateState]
+  );
+
+  const retryConversion = useCallback(
+    async (formatName: string) => {
+      // Use conversionId from props or from conversion data
+      const actualConversionId = conversionId || conversion?._id;
+
+      if (!actualConversionId) return;
+
+      // For resolution-based formats like "1080x1920", extract width and height
+      const resolutionMatch = formatName.match(/^(\d+)x(\d+)$/);
+      let targetWidth = 1080;
+      let targetHeight = 1080;
+      let platform = "unknown";
+
+      if (resolutionMatch) {
+        targetWidth = parseInt(resolutionMatch[1], 10);
+        targetHeight = parseInt(resolutionMatch[2], 10);
+      }
+
+      // Try to find the formFactor for platform detection
+      const formFactor = getFormFactor(formatName);
+      if (formFactor) {
+        platform = formFactor.platform;
+      }
+
+      // Set loading state immediately
+      updateState((prevState) => ({
+        processingFormats: new Set([...prevState.processingFormats, formatName]),
+        conversionResults: { ...prevState.conversionResults },
+      }));
+
+      // Remove existing result for this format
+      updateState((prevState) => {
+        const newConversionResults = { ...prevState.conversionResults };
+        delete newConversionResults[formatName];
+
+        return {
+          conversionResults: newConversionResults,
+        };
+      });
+
+      try {
+        // Use the signed URL from conversion data if available
+        const signedUrlToUse = conversion?.signedUrl;
+
+        if (!signedUrlToUse) {
+          throw new Error("No signed URL available for retry");
+        }
+
+        const conversionResult = await convertImageWithConvex(
+          {
+            platform,
+            format: formatName,
+            targetFormat: formatName,
+            targetWidth,
+            targetHeight,
+            signedUrl: signedUrlToUse,
+          },
+          actualConversionId
+        );
+
+        // Update conversion result
+        updateState((prevState) => ({
+          conversionResults: { ...prevState.conversionResults, [formatName]: conversionResult },
         }));
       } catch (error) {
         console.error("Error retrying conversion:", error);
@@ -180,42 +251,35 @@ export const useImageConverter = () => {
       } finally {
         // Clear loading state
         updateState((prevState) => ({
-          retryingFormats: new Set([...prevState.retryingFormats].filter((f) => f !== formatName)),
+          processingFormats: new Set([...prevState.processingFormats].filter((f) => f !== formatName)),
         }));
       }
     },
-    [state.uploadedFile, updateState]
+    [conversionId, conversion, updateState]
   );
 
   const retryConversionWithMessage = useCallback(
     async (formatName: string, customMessage: string) => {
-      if (!state.uploadedFile) return;
-
       // Get the existing converted image to use as the source for editing
-      const existingPreviewImage = state.previewImages[formatName];
-      if (!existingPreviewImage) {
+      const existingConversionResult = state.conversionResults[formatName];
+      if (!existingConversionResult?.success || !existingConversionResult.imageUrl) {
         console.error("No existing image found for editing");
         return;
       }
 
       // Set loading state immediately
       updateState((prevState) => ({
-        retryingFormats: new Set([...prevState.retryingFormats, formatName]),
+        processingFormats: new Set([...prevState.processingFormats, formatName]),
         conversionResults: { ...prevState.conversionResults },
-        previewImages: { ...prevState.previewImages },
       }));
 
-      // Remove existing result and preview for this format
+      // Remove existing result for this format
       updateState((prevState) => {
         const newConversionResults = { ...prevState.conversionResults };
         delete newConversionResults[formatName];
 
-        const newPreviewImages = { ...prevState.previewImages };
-        delete newPreviewImages[formatName];
-
         return {
           conversionResults: newConversionResults,
-          previewImages: newPreviewImages,
         };
       });
 
@@ -225,20 +289,15 @@ export const useImageConverter = () => {
         if (!formFactor) return;
 
         // For editing with instructions, we need to convert the base64 image back to a File
-        // This is a simplified approach - in a real implementation, you might want to store the original file
-        const response = await fetch(existingPreviewImage);
+        const response = await fetch(existingConversionResult.imageUrl);
         const blob = await response.blob();
         const file = new File([blob], "edited-image.png", { type: "image/png" });
 
         const conversionResult = await editImageWithInstructionAction(file, customMessage.trim(), formFactor.width, formFactor.height);
 
-        // Update both conversion result and preview image atomically
+        // Update conversion result
         updateState((prevState) => ({
           conversionResults: { ...prevState.conversionResults, [formatName]: conversionResult },
-          previewImages:
-            conversionResult.success && conversionResult.imageUrl
-              ? { ...prevState.previewImages, [formatName]: conversionResult.imageUrl }
-              : prevState.previewImages,
         }));
       } catch (error) {
         console.error("Error editing image with custom message:", error);
@@ -247,40 +306,43 @@ export const useImageConverter = () => {
       } finally {
         // Clear loading state
         updateState((prevState) => ({
-          retryingFormats: new Set([...prevState.retryingFormats].filter((f) => f !== formatName)),
+          processingFormats: new Set([...prevState.processingFormats].filter((f) => f !== formatName)),
         }));
       }
     },
-    [state.uploadedFile, state.previewImages, updateState]
+    [state.conversionResults, updateState]
   );
 
-  const handleAddMoreFormats = useCallback(() => {
-    // This function can be used to trigger the format selector dialog
-    // The actual dialog opening is handled by the FormatSelectorDialog component
-    // For now, we'll just ensure the dialog can be opened
-  }, []);
+  const toggleFormatSelection = useCallback(
+    (formatName: string) => {
+      updateState((prevState) => ({
+        selectedFormats: prevState.selectedFormats.includes(formatName)
+          ? prevState.selectedFormats.filter((name) => name !== formatName)
+          : [...prevState.selectedFormats, formatName],
+      }));
+    },
+    [updateState]
+  );
+
+  const batchUpdateFormats = useCallback(
+    (formatNames: string[]) => {
+      updateState({
+        selectedFormats: formatNames,
+      });
+    },
+    [updateState]
+  );
 
   return {
     // State
     ...state,
 
     // Actions
-    setImageUpload,
-    toggleFormatSelection,
-    setFormatSelections,
-    resetState,
     downloadImage,
     retryConversion,
     retryConversionWithMessage,
-
-    // Computed
-    hasUploadedImage: !!state.uploadedFile,
-    hasSelectedFormats: state.selectedFormats.length > 0,
-    unconvertedFormats: state.selectedFormats.filter((formatName) => !state.conversionResults[formatName]),
-
-    // Event handlers
-    handleConvertSelected: convertSelectedFormats,
-    handleFormatDialogComplete,
-    handleAddMoreFormats,
+    convertSingleFormat,
+    toggleFormatSelection,
+    batchUpdateFormats,
   };
 };

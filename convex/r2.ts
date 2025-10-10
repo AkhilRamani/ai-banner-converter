@@ -34,6 +34,75 @@ export const generateUploadUrl = mutation({
   },
 });
 
+export const generateGenerationUploadUrl = mutation({
+  args: {
+    conversionResultId: v.id("conversionResults"),
+    fileName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    // Verify the conversion result belongs to the user
+    const conversionResult = await ctx.db.get(args.conversionResultId);
+    if (!conversionResult) {
+      throw new Error("Conversion result not found");
+    }
+
+    const conversion = await ctx.db.get(conversionResult.conversionId);
+    if (!conversion || conversion.userId !== userId) {
+      throw new Error("Access denied");
+    }
+
+    // Create key with pattern: userId/generations/conversionResultId
+    const key = `${userId}/generations/${args.conversionResultId}`;
+    const uploadData = await r2.generateUploadUrl(key);
+
+    return {
+      ...uploadData,
+      key,
+    };
+  },
+});
+
+export const getUrl = mutation({
+  args: {
+    key: v.string(),
+    expiresIn: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    // Extract userId from the key to verify ownership
+    const keyParts = args.key.split("/");
+    if (keyParts.length < 2) {
+      throw new Error("Invalid key format");
+    }
+
+    const keyUserId = keyParts[0];
+    if (keyUserId !== userId) {
+      throw new Error("Access denied");
+    }
+
+    return await r2.getUrl(args.key, { expiresIn: args.expiresIn });
+  },
+});
+
+export const getSignedUrl = mutation({
+  args: {
+    key: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    // Generate signed URL for accessing the file
+    const signedUrl = await r2.getUrl(args.key, { expiresIn: 3600 });
+
+    return {
+      signedUrl: signedUrl,
+    };
+  },
+});
+
 export const { syncMetadata } = r2.clientApi({
   checkUpload: async (ctx, bucket) => {
     // Validate that the user can upload to this bucket

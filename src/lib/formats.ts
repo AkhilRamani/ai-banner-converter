@@ -193,3 +193,23 @@ export const getAllPlatforms = (): string[] => {
 export const getAllFormats = (): FormFactor[] => {
   return Object.values(FORM_FACTORS_BY_PLATFORM).flat();
 };
+
+// Map dimensions to format names for Convex data compatibility
+export const getFormatNameFromDimensions = (width: number, height: number): string | undefined => {
+  for (const platformFormats of Object.values(FORM_FACTORS_BY_PLATFORM)) {
+    const format = platformFormats.find((format) => format.width === width && format.height === height);
+    if (format) return format.name;
+  }
+  return undefined;
+};
+
+// Map dimension string (e.g., "1080x1920") to format name
+export const getFormatNameFromDimensionString = (dimensionString: string): string | undefined => {
+  const match = dimensionString.match(/^(\d+)x(\d+)$/);
+  if (!match) return undefined;
+
+  const width = parseInt(match[1], 10);
+  const height = parseInt(match[2], 10);
+
+  return getFormatNameFromDimensions(width, height);
+};

@@ -30,11 +30,8 @@ export default defineSchema({
     platform: platformValidator,
     format: v.string(),
     status: formatResultStatusValidator,
-    r2Key: v.optional(v.string()),
-    r2Url: v.optional(v.string()),
     width: v.optional(v.number()),
     height: v.optional(v.number()),
-    createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_conversion", { fields: ["conversionId"] })
