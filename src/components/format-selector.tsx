@@ -6,32 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Check, Wand2 } from "lucide-react";
 import { FormFactor, FORM_FACTORS_BY_PLATFORM } from "@/lib/formats";
 import { cn } from "@/lib/utils";
-
-interface PlatformIconProps {
-  platform: string;
-  className?: string;
-}
-
-const PlatformIcon = ({ platform, className }: PlatformIconProps) => {
-  const iconMap: Record<string, string> = {
-    Instagram: "/icons/instagram-icon.svg",
-    Facebook: "/icons/fb-icon.svg",
-    Meta: "/icons/meta-icon.svg",
-    "Google Ads": "/icons/google-icon.svg",
-    LinkedIn: "/icons/linkedin-icon.svg",
-    "Twitter/X": "/icons/x-icon.svg",
-    YouTube: "/icons/youtube-icon.svg",
-    Pinterest: "/icons/pinterest-icon.svg",
-    TikTok: "/icons/tiktok-icon.svg",
-    Twitch: "/icons/twitch-icon.svg",
-    Email: "/icons/google-icon.svg",
-    Website: "/icons/google-icon.svg",
-  };
-
-  const iconSrc = iconMap[platform] || "/icons/google-icon.svg";
-
-  return <img src={iconSrc} alt={`${platform} icon`} className={cn("w-5 h-5", className)} />;
-};
+import { PlatformIcon } from "./shared/platform-icon";
 
 interface FormatSelectorProps {
   formFactors: FormFactor[];
