@@ -71,10 +71,10 @@ const PlaceholderBox = ({
 
   if (hasPreview) {
     return (
-      <div className={cn("relative h-fit", className)}>
+      <div className={cn("relative h-fit group", className)}>
         <div className="mb-4 text-sm font-medium text-center">{formFactor.name}</div>
         <div
-          className={cn("relative bg-gray-100 group", hasError && "ring-2 ring-red-500/50 bg-red-50/50")}
+          className={cn("relative bg-gray-100 group rounded-xl overflow-hidden", hasError && "ring-2 ring-red-500/50 bg-red-50/50")}
           style={{
             aspectRatio: `${formFactor.width}/${formFactor.height}`,
           }}
@@ -90,27 +90,22 @@ const PlaceholderBox = ({
               </div>
             </div>
           )}
-
-          {/* Download button overlay - only show if no error */}
-          {!hasError && (
-            <div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 bg-black/50 group-hover:opacity-100">
-              <Button size="sm" onClick={onDownload} className="text-gray-900 bg-white/90 hover:bg-white">
-                <Download className="w-4 h-4 mr-2" />
-                Download
-              </Button>
-            </div>
-          )}
         </div>
 
-        <div className="absolute right-0 -bottom-9">
-          <ButtonCustom
-            className={cn("mt-2 w-7 h-7", hasError ? "bg-red-100 hover:bg-red-200 text-red-700" : "bg-gray-100 hover:bg-gray-200")}
-            variant="secondary"
-            onClick={() => setIsRetryDialogOpen(true)}
-            title={hasError ? "Retry failed conversion" : "Retry conversion with custom instructions"}
-          >
+        <div
+          className={cn(
+            "absolute -bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 bg-white rounded-full px-2 py-1 shadow",
+            "hidde opacity-0 -mb-2 items-center group-hover:mb-0 group-hover:flex group-hover:opacity-100 ease-out duration-150"
+          )}
+        >
+          <ButtonCustom className={cn("size-8")} variant="ghost" size="icon" onClick={() => setIsRetryDialogOpen(true)}>
             <RotateCcw className="size-3.5" />
           </ButtonCustom>
+          {!hasError && (
+            <ButtonCustom className={cn("size-8")} variant="ghost" size="icon" onClick={onDownload}>
+              <Download className="size-3.5" />
+            </ButtonCustom>
+          )}
         </div>
 
         {/* Retry with Message Dialog */}
@@ -151,7 +146,6 @@ const PlaceholderBox = ({
               <Loader2 className="text-blue-600 animate-spin size-8 stroke-2" />
               <div className="text-center">
                 <div className="text-sm font-medium text-blue-700">{isRetrying ? "Retrying..." : "Converting..."}</div>
-                <div className="text-xs text-blue-600/70 mt-1">Please wait while we process your image</div>
               </div>
             </div>
           ) : (

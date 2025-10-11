@@ -52,6 +52,8 @@ export async function convertImageWithConvex(options: ConversionOptions, convers
       platform: options.platform,
       format: options.format,
       imageData: result.imageData,
+      width: options.targetWidth,
+      height: options.targetHeight,
     });
 
     if (!storeResult.success) {
@@ -85,11 +87,15 @@ export async function storeConversionResult({
   platform,
   format,
   imageData,
+  width,
+  height,
 }: {
   conversionId: string;
   platform: string;
   format: string;
   imageData: Buffer;
+  width?: number;
+  height?: number;
 }): Promise<{ success: boolean; conversionResultId?: string; error?: string }> {
   const convex = await createConvexClient();
 
@@ -118,10 +124,12 @@ export async function storeConversionResult({
       throw new Error(`Failed to upload to R2: ${uploadResponse.statusText}`);
     }
 
-    // Update conversion result with status
+    // Update conversion result with status and dimensions
     await convex.mutation(api.functions.conversionResults.updateConversionResult, {
       formatId: conversionResultId as any,
       status: "completed",
+      width: width,
+      height: height,
     });
 
     return { success: true, conversionResultId };

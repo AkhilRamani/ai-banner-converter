@@ -105,21 +105,12 @@ export const useImageConverter = ({ conversion, conversionResults, conversionId 
         return;
       }
 
-      // For resolution-based formats like "1080x1920", extract width and height
-      const resolutionMatch = formatName.match(/^(\d+)x(\d+)$/);
-      let targetWidth = 1080;
-      let targetHeight = 1080;
-      let platform = "unknown";
-
-      if (resolutionMatch) {
-        targetWidth = parseInt(resolutionMatch[1], 10);
-        targetHeight = parseInt(resolutionMatch[2], 10);
-      }
-
-      // Try to find the formFactor for platform detection
+      // Get formFactor for proper dimensions and platform detection
       const formFactor = getFormFactor(formatName);
-      if (formFactor) {
-        platform = formFactor.platform;
+
+      if (!formFactor) {
+        console.error(`No formFactor found for format: ${formatName}`);
+        return;
       }
 
       // Set loading state immediately
@@ -150,11 +141,11 @@ export const useImageConverter = ({ conversion, conversionResults, conversionId 
 
         const conversionResult = await convertImageWithConvex(
           {
-            platform,
+            platform: formFactor.platform,
             format: formatName,
             targetFormat: formatName,
-            targetWidth,
-            targetHeight,
+            targetWidth: formFactor.width,
+            targetHeight: formFactor.height,
             signedUrl: signedUrlToUse,
           },
           actualConversionId
@@ -187,21 +178,12 @@ export const useImageConverter = ({ conversion, conversionResults, conversionId 
 
       if (!actualConversionId) return;
 
-      // For resolution-based formats like "1080x1920", extract width and height
-      const resolutionMatch = formatName.match(/^(\d+)x(\d+)$/);
-      let targetWidth = 1080;
-      let targetHeight = 1080;
-      let platform = "unknown";
-
-      if (resolutionMatch) {
-        targetWidth = parseInt(resolutionMatch[1], 10);
-        targetHeight = parseInt(resolutionMatch[2], 10);
-      }
-
-      // Try to find the formFactor for platform detection
+      // Get formFactor for proper dimensions and platform detection
       const formFactor = getFormFactor(formatName);
-      if (formFactor) {
-        platform = formFactor.platform;
+
+      if (!formFactor) {
+        console.error(`No formFactor found for format: ${formatName}`);
+        return;
       }
 
       // Set loading state immediately
@@ -230,11 +212,11 @@ export const useImageConverter = ({ conversion, conversionResults, conversionId 
 
         const conversionResult = await convertImageWithConvex(
           {
-            platform,
+            platform: formFactor.platform,
             format: formatName,
             targetFormat: formatName,
-            targetWidth,
-            targetHeight,
+            targetWidth: formFactor.width,
+            targetHeight: formFactor.height,
             signedUrl: signedUrlToUse,
           },
           actualConversionId
@@ -334,10 +316,7 @@ export const useImageConverter = ({ conversion, conversionResults, conversionId 
   );
 
   return {
-    // State
     ...state,
-
-    // Actions
     downloadImage,
     retryConversion,
     retryConversionWithMessage,
