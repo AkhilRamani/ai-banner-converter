@@ -2,12 +2,11 @@
 
 import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowRight } from "lucide-react";
+import { Plus } from "lucide-react";
 import { FormFactor, FORM_FACTORS_BY_PLATFORM } from "@/lib/formats";
 import { cn } from "@/lib/utils";
 import { FormatSelectorDialog } from "./format-selector-dialog";
-import { ButtonCustom } from "./ui/custom/button-custom";
-import Image from "next/image";
+import { SelectFormatsCTA } from "./shared/CTAs/select-formats-cta";
 import { useImageConverter, ConversionResultWithSignedUrl } from "@/lib/hooks/use-image-converter";
 import { Doc } from "../../convex/_generated/dataModel";
 import { PlaceholderBox } from "./placeholder-box";
@@ -76,40 +75,22 @@ export function Canvas({ conversion, conversionResults }: CanvasProps = {}) {
   // Show empty state when no formats are selected
   if (selectedFormats.length === 0) {
     return (
-      <div className={cn("relative")}>
-        <div className="flex items-center justify-center flex-1 h-full">
-          <div className="w-full max-w-md bg-white border rounded-2xl shadow-2xl shadow-black/5 text-center overflow-hidden">
-            <Image src="/imgs/bg-cover.png" alt="Your Image" width={500} height={300} className="h-72 object-cover" />
-            <div className="p-8">
-              <h3 className="mb-2 text-xl font-medium">Ready to Convert Your Designs</h3>
-              <p className="mb-6 text-sm text-gray-600">Upload your design and select formats to convert</p>
-
-              {/* Show when no formats are selected */}
-              <FormatSelectorDialog
-                selectedFormats={selectedFormats}
-                convertedFormats={convertedFormats}
-                onFormatToggle={handleFormatToggle}
-                onSelectComplete={() => {}}
-                onBatchFormatUpdate={handleBatchFormatUpdate}
-                externalOpen={isDialogOpen}
-                onOpenChange={setIsDialogOpen}
-                trigger={
-                  <ButtonCustom size="lg" variant="main">
-                    Select Formats
-                    <ArrowRight />
-                  </ButtonCustom>
-                }
-              />
-            </div>
-          </div>
-        </div>
+      <div className="h-full flex">
+        <SelectFormatsCTA
+          selectedFormats={selectedFormats}
+          convertedFormats={convertedFormats}
+          onFormatToggle={handleFormatToggle}
+          onBatchFormatUpdate={handleBatchFormatUpdate}
+          isDialogOpen={isDialogOpen}
+          setIsDialogOpen={setIsDialogOpen}
+        />
       </div>
     );
   }
 
   return (
     <div className={cn("relative")}>
-      <div className="space-y-16">
+      <div className="space-y-16 pb-20">
         {Object.entries(formatsByPlatform).map(([platform, formats]) => (
           <div key={platform} className="space-y-8">
             <div className="flex items-center gap-8 py-2 px-4 rounded-lg bg-white border w-full max-w-[38rem] justify-between shadow-3xl shadow-red-900/5">
