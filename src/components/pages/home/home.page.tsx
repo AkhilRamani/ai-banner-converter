@@ -12,11 +12,11 @@ import Image from "next/image";
 // Conversion Tile Component
 function ConversionTile({ conversion }: { conversion: any }) {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-1 items-center">
+    <div className="flex flex-col gap-4 justify-center">
+      <div className="flex flex-1- items-center">
         <Link href={`/convert/${conversion._id}`} className="flex-1 hover:shadow-lg shadow-primary/10  transition-shadow rounded-md overflow-hidden">
           {conversion.signedUrl ? (
-            <div className="relative w-full flex ">
+            <div className="relative w-full flex">
               <Image
                 src={conversion.signedUrl}
                 alt={conversion.name || conversion.fileName}
