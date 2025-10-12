@@ -119,9 +119,6 @@ export const PlaceholderBox = ({
           {isLoading ? (
             <div className="flex flex-col items-center gap-3">
               <Loader2 className="text-blue-600 animate-spin size-8 stroke-2" />
-              <div className="text-center">
-                <div className="text-sm font-medium text-blue-700">{isRetrying ? "Retrying..." : "Converting..."}</div>
-              </div>
             </div>
           ) : (
             <>
