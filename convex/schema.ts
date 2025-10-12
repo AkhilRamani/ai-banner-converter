@@ -22,6 +22,7 @@ export default defineSchema({
     fileName: v.string(),
     fileSize: v.number(),
     isUploadPending: v.boolean(),
+    name: v.string(),
     updatedAt: v.number(),
   }).index("by_user", { fields: ["userId"] }),
 

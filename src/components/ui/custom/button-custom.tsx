@@ -15,7 +15,7 @@ const customButtonVariants = cva(
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
           "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 text-primary",
-        secondary: "bg-secondary text-red-950 hover:bg-secondary/80- hover:bg-red-900/10",
+        secondary: "bg-secondary text-neutral-950 hover:bg-secondary/80- hover:bg-neutral-800/10",
         ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 bg-transparent text-primary",
         link: "text-primary underline-offset-4 hover:underline",
         main: "bg-gradient-to-tr from-blue-600 to-blue-500 text-white hover:bg-blue-500 focus-visible:ring-blue-800 shadow-md",
@@ -52,7 +52,7 @@ const ButtonCustom = React.forwardRef<HTMLButtonElement, CustomButtonProps>(
           customButtonVariants({ variant, size, className }),
           // Override default variant with brand color (red-900)
           variant === "default" && "[&[data-slot='button']]:bg-red-900 [&[data-slot='button']]:text-white [&[data-slot='button']]:hover:bg-red-800",
-          "font-semibold"
+          "font-semibold cursor-pointer"
         )}
         ref={ref}
         disabled={isDisabled}

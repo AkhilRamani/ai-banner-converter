@@ -19,6 +19,7 @@ export const generateUploadUrl = mutation({
       fileName: args.fileName,
       fileSize: 0, // Will be updated when file is uploaded
       isUploadPending: true,
+      name: `Design on ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
       updatedAt: Date.now(),
     });
 

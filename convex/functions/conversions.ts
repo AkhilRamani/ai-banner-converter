@@ -42,6 +42,19 @@ export const getConversions = query({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
-    return args.limit ? results.slice(0, args.limit) : results;
+    // Generate signed URLs for each conversion's uploaded image
+    const conversionsWithSignedUrls = await Promise.all(
+      results.map(async (conversion) => {
+        const key = `${userId}/uploads/${conversion._id}`;
+        const signedUrl = await r2.getUrl(key, { expiresIn: 3600 });
+
+        return {
+          ...conversion,
+          signedUrl: signedUrl,
+        };
+      })
+    );
+
+    return args.limit ? conversionsWithSignedUrls.slice(0, args.limit) : conversionsWithSignedUrls;
   },
 });
