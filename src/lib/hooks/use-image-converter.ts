@@ -15,7 +15,6 @@ export type ConversionWithSignedUrl = Doc<"conversions"> & { signedUrl?: string 
 export interface UseImageConverterProps {
   conversion?: ConversionWithSignedUrl;
   conversionResults?: ConversionResultWithSignedUrl[];
-  conversionId?: string;
 }
 
 export interface ImageConverterState {
@@ -30,7 +29,7 @@ const createInitialState = (): ImageConverterState => ({
   selectedFormats: [],
 });
 
-export const useImageConverter = ({ conversion, conversionResults, conversionId }: UseImageConverterProps = {}) => {
+export const useImageConverter = ({ conversion, conversionResults }: UseImageConverterProps = {}) => {
   const [state, setState] = useState<ImageConverterState>(createInitialState());
 
   // Initialize state from provided conversion results
@@ -94,12 +93,11 @@ export const useImageConverter = ({ conversion, conversionResults, conversionId 
 
   const convertSingleFormat = useCallback(
     async (formatName: string) => {
-      // Use conversionId from props or from conversion data
-      const actualConversionId = conversionId || conversion?._id;
+      // Use conversionId from conversion data
+      const conversionId = conversion?._id;
 
-      if (!actualConversionId) {
+      if (!conversionId) {
         console.log("❌ convertSingleFormat: Missing conversionId", {
-          conversionId,
           conversionIdFromData: conversion?._id,
         });
         return;
@@ -148,7 +146,7 @@ export const useImageConverter = ({ conversion, conversionResults, conversionId 
             targetHeight: formFactor.height,
             signedUrl: signedUrlToUse,
           },
-          actualConversionId
+          conversionId
         );
 
         console.log("✅ convertSingleFormat: API call completed for", formatName, conversionResult);
@@ -168,15 +166,15 @@ export const useImageConverter = ({ conversion, conversionResults, conversionId 
         }));
       }
     },
-    [conversionId, conversion, updateState]
+    [conversion, updateState]
   );
 
   const retryConversion = useCallback(
     async (formatName: string) => {
-      // Use conversionId from props or from conversion data
-      const actualConversionId = conversionId || conversion?._id;
+      // Use conversionId from conversion data
+      const conversionId = conversion?._id;
 
-      if (!actualConversionId) return;
+      if (!conversionId) return;
 
       // Get formFactor for proper dimensions and platform detection
       const formFactor = getFormFactor(formatName);
@@ -219,7 +217,7 @@ export const useImageConverter = ({ conversion, conversionResults, conversionId 
             targetHeight: formFactor.height,
             signedUrl: signedUrlToUse,
           },
-          actualConversionId
+          conversionId
         );
 
         // Update conversion result
@@ -237,7 +235,7 @@ export const useImageConverter = ({ conversion, conversionResults, conversionId 
         }));
       }
     },
-    [conversionId, conversion, updateState]
+    [conversion, updateState]
   );
 
   const retryConversionWithMessage = useCallback(

@@ -62,21 +62,23 @@ export const NewConversionDialog = ({ children }: { children: React.ReactNode })
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContentCustom className="max-h-[85vh] h-full !min-w-[60vw]" title="Convert to other formats">
-        <ImageUpload
-          onImageUpload={handleImageSelection}
-          onImageRemove={handleImageRemove}
-          uploadedImage={selectedFile ? URL.createObjectURL(selectedFile) : undefined}
-          isProcessing={isUploading}
-        />
+        <div className="flex flex-col flex-1 gap-6">
+          <ImageUpload
+            onImageUpload={handleImageSelection}
+            onImageRemove={handleImageRemove}
+            uploadedImage={selectedFile ? URL.createObjectURL(selectedFile) : undefined}
+            isProcessing={isUploading}
+          />
 
-        <div className="flex gap-2 shrink-0 justify-end">
-          <ButtonCustom variant="outline" className="w-28" onClick={() => setIsDialogOpen(false)} disabled={isUploading}>
-            Cancel
-          </ButtonCustom>
-          <ButtonCustom variant="main" className="w-28" onClick={handleUpload} disabled={!selectedFile || isUploading} loading={isUploading}>
-            <Upload className="w-4 h-4 mr-2" />
-            Upload
-          </ButtonCustom>
+          <div className="flex gap-2 shrink-0 justify-end">
+            <ButtonCustom variant="outline" className="w-28" onClick={() => setIsDialogOpen(false)} disabled={isUploading}>
+              Cancel
+            </ButtonCustom>
+            <ButtonCustom variant="main" className="w-28" onClick={handleUpload} disabled={!selectedFile || isUploading} loading={isUploading}>
+              <Upload className="w-4 h-4 mr-2" />
+              Upload
+            </ButtonCustom>
+          </div>
         </div>
       </DialogContentCustom>
     </Dialog>

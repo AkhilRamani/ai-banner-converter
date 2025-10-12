@@ -5,7 +5,6 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Canvas } from "@/components/canvas";
 import { Doc } from "../../../convex/_generated/dataModel";
-import { ConversionResultWithSignedUrl } from "@/lib/hooks/use-image-converter";
 
 interface MainContentProps {
   conversionId?: string;
@@ -22,5 +21,5 @@ export function MainContent({ conversionId, conversion }: MainContentProps = {})
   console.log("📊 MainContent: Fetched conversion results:", conversionResults);
 
   // Simple pass-through - responsibility is just to fetch and pass data
-  return <Canvas conversionId={conversionId} conversion={conversion} conversionResults={conversionResults} />;
+  return <Canvas conversion={conversion} conversionResults={conversionResults} />;
 }

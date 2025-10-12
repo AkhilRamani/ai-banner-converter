@@ -6,6 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { RotateCcw, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DialogContentCustom } from "./ui/custom/dialog-custom";
+import { ButtonCustom } from "./ui/custom/button-custom";
+import Image from "next/image";
 
 interface RetryWithMessageDialogProps {
   isOpen: boolean;
@@ -44,70 +47,48 @@ export function RetryWithMessageDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="!max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col gap-0 p-0">
-        <DialogHeader className="px-6 py-5 border-b">
-          <DialogTitle className="flex items-center gap-2">
-            <RotateCcw className="w-5 h-5" />
-            Retry Conversion with Custom Instructions
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="px-6 py-6 space-y-6 overflow-auto">
+      <DialogContentCustom className="!max-w-[80vw] max-h-[90vh] h-full flex flex-col gap-0" title="Regenerate or edit design">
+        <div className="flex gap-6 h-full">
           {/* Last converted image preview */}
           {lastConvertedImage && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-900">Last Converted Image</h3>
-              <div className="relative bg-gray-100 border border-gray-300 rounded-lg p-4">
-                <img src={lastConvertedImage} alt={`Last converted ${formatName}`} className="object-contain w-full h-auto max-h-64 rounded" />
-              </div>
+            <div className="flex-1 flex bg-neutral-100 border rounded-lg p-6">
+              <Image
+                src={lastConvertedImage}
+                alt={`Last converted ${formatName}`}
+                className="object-contain h-auto- w-full"
+                width={400}
+                height={400}
+              />
             </div>
           )}
 
           {/* Custom message input */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-900">Custom Instructions for {formatName}</h3>
-            <p className="text-sm text-gray-600">
-              Describe how you'd like the AI to modify or improve this conversion. Be specific about changes, style, or elements you want to adjust.
-            </p>
-            <Textarea
-              value={customMessage}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCustomMessage(e.target.value)}
-              placeholder="e.g., Make the background more vibrant, add modern styling, focus on the product details, use a minimalist approach..."
-              className="min-h-[120px] resize-none"
-              disabled={isRetrying}
-            />
+          <div className="max-w-[30%] flex flex-col gap-10 justify-between">
+            <div className="flex-1 flex flex-col gap-4">
+              <h3 className="text-base font-medium text-gray-900">Custom Instructions for {formatName}</h3>
+              <p className="text-sm text-muted-foreground">
+                Describe how you'd like the AI to modify or improve this image. Be specific about changes, style, or elements you want to adjust.
+              </p>
+              <Textarea
+                value={customMessage}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCustomMessage(e.target.value)}
+                placeholder="e.g., Remove bottom text, replace title text with 'Some new title', move element to corner/center ..."
+                className="min-h-[120px] h-full resize-none"
+                disabled={isRetrying}
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <ButtonCustom variant="outline" onClick={handleCancel} disabled={isRetrying} className="grow">
+                Cancel
+              </ButtonCustom>
+              <ButtonCustom variant="main" onClick={handleSubmit} disabled={!customMessage.trim() || isRetrying} className="px-4">
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Retry with Instructions
+              </ButtonCustom>
+            </div>
           </div>
         </div>
-
-        {/* Action buttons */}
-        <div className="flex items-center justify-between px-6 py-4 border-t">
-          <div className="text-sm text-gray-600">
-            {customMessage.trim() ? (
-              <span className="text-green-600">Ready to retry with custom instructions</span>
-            ) : (
-              "Enter custom instructions to retry"
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleCancel} disabled={isRetrying}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit} disabled={!customMessage.trim() || isRetrying} className="px-4">
-              {isRetrying ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Retrying...
-                </>
-              ) : (
-                <>
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Retry with Instructions
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
+      </DialogContentCustom>
     </Dialog>
   );
 }

@@ -14,12 +14,11 @@ import { PlaceholderBox } from "./placeholder-box";
 import { PlatformIcon } from "./shared/platform-icon";
 
 interface CanvasProps {
-  conversionId?: string;
   conversion?: Doc<"conversions"> & { signedUrl?: string };
   conversionResults?: ConversionResultWithSignedUrl[];
 }
 
-export function Canvas({ conversionId, conversion, conversionResults }: CanvasProps = {}) {
+export function Canvas({ conversion, conversionResults }: CanvasProps = {}) {
   const {
     conversionResults: localConversionResults,
     processingFormats,
@@ -31,7 +30,6 @@ export function Canvas({ conversionId, conversion, conversionResults }: CanvasPr
     toggleFormatSelection,
     batchUpdateFormats,
   } = useImageConverter({
-    conversionId,
     conversion,
     conversionResults,
   });

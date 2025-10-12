@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Check, Wand, LayoutTemplate, LayoutPanelLeftIcon, LayoutDashboard, LayoutGrid } from "lucide-react";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { DialogContentCustom } from "@/components/ui/custom/dialog-custom";
+import { Check, Plus } from "lucide-react";
 import { FormFactor, FORM_FACTORS_BY_PLATFORM } from "@/lib/formats";
 import { cn } from "@/lib/utils";
 import { PlatformIcon } from "./shared/platform-icon";
+import { ButtonCustom } from "./ui/custom/button-custom";
 
 interface FormatCardProps {
   formFactor: FormFactor;
@@ -167,19 +168,15 @@ export function FormatSelectorDialog({
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="!max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col gap-0 p-0">
-        <DialogHeader className="px-6 py-5 border-b">
-          <DialogTitle className="flex items-center gap-2">Select Formats to Convert</DialogTitle>
-        </DialogHeader>
-
-        <div className="px-6 py-10 space-y-10 overflow-auto">
+      <DialogContentCustom className="!max-w-4xl max-h-[90vh]" title="Select Formats to Convert">
+        <div className="px-6 pb-10 space-y-10 -mx-6 h-min">
           {platforms.map((platform) => {
             const platformFormats = FORM_FACTORS_BY_PLATFORM[platform] || [];
             const selectedCount = platformFormats.filter((f) => selectedFormats.includes(f.name)).length;
             const allSelected = platformFormats.every((f) => selectedFormats.includes(f.name));
 
             return (
-              <div key={platform} className="space-y-6 grow">
+              <div key={platform} className="space-y-6 grow pb-8">
                 <div className="flex items-center justify-between">
                   <h3 className="flex items-center gap-2 text-base font-medium text-gray-900">
                     <PlatformIcon platform={platform} className="opacity-50 size-5" />
@@ -210,23 +207,21 @@ export function FormatSelectorDialog({
           })}
         </div>
 
-        {/* {selectedFormats.length > 0 && ( */}
-        {
-          <div className="flex items-center justify-between px-6 py-3 border-t">
-            <div className="text-sm text-gray-600">
-              {pendingSelections.length} format{pendingSelections.length !== 1 ? "s" : ""} selected
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => handleDialogClose(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleDone} disabled={pendingSelections.length === 0} className="px-4">
-                Done
-              </Button>
-            </div>
+        <div className="fixed bottom-0 left-0 right-0 pb-6 px-6 pt-6 flex items-center justify-between bg-gradient-to-t from-white from-75% to-transparent">
+          <div className="text-sm text-gray-600">
+            {pendingSelections.length} format{pendingSelections.length !== 1 ? "s" : ""} selected
           </div>
-        }
-      </DialogContent>
+          <div className="flex gap-3">
+            <ButtonCustom variant="outline" className="w-28" onClick={() => handleDialogClose(false)}>
+              Cancel
+            </ButtonCustom>
+            <ButtonCustom variant="main" className="w-28" onClick={handleDone} disabled={pendingSelections.length === 0}>
+              <Plus />
+              Add
+            </ButtonCustom>
+          </div>
+        </div>
+      </DialogContentCustom>
     </Dialog>
   );
 }

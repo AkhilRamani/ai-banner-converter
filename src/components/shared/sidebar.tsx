@@ -14,7 +14,7 @@ export function Sidebar({ conversion }: { conversion?: ConversionType }) {
           {conversion?.signedUrl && (
             <div className="mb-6">
               <h3 className="text-sm font-medium text-gray-700 mb-4">Original Image</h3>
-              <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
+              <div className="relative w-full">
                 <Image
                   src={conversion.signedUrl}
                   alt="Uploaded conversion"
