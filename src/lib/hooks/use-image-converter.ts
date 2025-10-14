@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { getFormFactor } from "@/lib/formats";
 import { editImageWithInstructionAction, ConversionResult } from "@/lib/actions";
-import { convertImageWithConvex } from "@/lib/conversionActions";
+import { convertImageWithConvex, retryEditWithConvex } from "@/lib/conversionActions";
 import { Doc } from "../../../convex/_generated/dataModel";
 
 // Extended conversion result type that includes signedUrl from the mutation
@@ -268,19 +268,33 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
         const formFactor = getFormFactor(formatName);
         if (!formFactor) return;
 
-        // For editing with instructions, we need to convert the base64 image back to a File
-        const response = await fetch(existingConversionResult.imageUrl);
-        const blob = await response.blob();
-        const file = new File([blob], "edited-image.png", { type: "image/png" });
+        // For retry with message, we need to find the existing conversion result record
+        // to get its ID for R2 key replacement
+        const existingConversionRecord = conversionResults?.find((result) => result.format === formatName);
 
-        const conversionResult = await editImageWithInstructionAction(file, customMessage.trim(), formFactor.width, formFactor.height);
+        if (!existingConversionRecord) {
+          throw new Error("No existing conversion record found for retry");
+        }
+
+        const conversionResult = await retryEditWithConvex(
+          {
+            platform: formFactor.platform,
+            format: formatName,
+            targetFormat: formatName,
+            targetWidth: formFactor.width,
+            targetHeight: formFactor.height,
+            signedUrl: existingConversionResult.imageUrl,
+            instruction: customMessage.trim(),
+          },
+          existingConversionRecord._id
+        );
 
         // Update conversion result
         updateState((prevState) => ({
           conversionResults: { ...prevState.conversionResults, [formatName]: conversionResult },
         }));
       } catch (error) {
-        console.error("Error editing image with custom message:", error);
+        console.error("Error retrying conversion with custom message:", error);
         const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
         alert(`Error: ${errorMessage}`);
       } finally {
@@ -290,7 +304,7 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
         }));
       }
     },
-    [state.conversionResults, updateState]
+    [state.conversionResults, updateState, conversionResults]
   );
 
   const toggleFormatSelection = useCallback(

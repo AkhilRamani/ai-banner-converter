@@ -142,7 +142,15 @@ export async function storeConversionResult({
   }
 }
 
-export async function editImageWithInstructionAndConvex(options: ConversionOptions & { instruction: string }): Promise<ConversionResult> {
+/**
+ * Retry edit with custom instruction using existing conversion result record
+ * - Updates existing conversion result instead of creating new one
+ * - Uses same R2 key for replacement
+ */
+export async function retryEditWithConvex(
+  options: ConversionOptions & { instruction: string },
+  existingConversionResultId: string
+): Promise<ConversionResult> {
   try {
     const sourceImageFile = await fetchImageFromSignedUrl(options.signedUrl);
     const result = await editWithInstruction(sourceImageFile, options.instruction, options.targetWidth, options.targetHeight);
@@ -150,7 +158,43 @@ export async function editImageWithInstructionAndConvex(options: ConversionOptio
     if (!result.success || !result.imageData) {
       return {
         success: false,
-        error: result.error || "Edit failed",
+        error: result.error || "Retry edit failed",
+      };
+    }
+
+    // Store in R2 and update existing conversion result record using same key for replacement
+    const convexClient = await createConvexClient();
+
+    try {
+      // Generate filename and upload to R2 using existing conversionResultId for same key
+      const fileName = `conversion_${existingConversionResultId}_${Date.now()}.png`;
+      const uploadData = await convexClient.mutation(api.r2.generateGenerationUploadUrl, {
+        conversionResultId: existingConversionResultId as any,
+        fileName: fileName,
+      });
+
+      const uploadResponse = await fetch(uploadData.url, {
+        method: "PUT",
+        body: Buffer.from(result.imageData),
+        headers: { "Content-Type": "image/png" },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Failed to upload to R2: ${uploadResponse.statusText}`);
+      }
+
+      // Update conversion result with status and dimensions
+      await convexClient.mutation(api.functions.conversionResults.updateConversionResult, {
+        formatId: existingConversionResultId as any,
+        status: "completed",
+        width: options.targetWidth,
+        height: options.targetHeight,
+      });
+    } catch (error) {
+      console.error("Error storing retry conversion result:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to store retry conversion result",
       };
     }
 
@@ -159,10 +203,10 @@ export async function editImageWithInstructionAndConvex(options: ConversionOptio
       imageUrl: `data:image/png;base64,${result.imageData.toString("base64")}`,
     };
   } catch (error) {
-    console.error("Error in editImageWithInstructionAndConvex:", error);
+    console.error("Error in retryEditWithConvex:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Edit failed",
+      error: error instanceof Error ? error.message : "Retry edit failed",
     };
   }
 }
