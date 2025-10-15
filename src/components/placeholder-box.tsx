@@ -42,7 +42,7 @@ export const PlaceholderBox = ({
   // Determine the current state
   const hasError = conversionResult && !conversionResult.success && conversionResult.error;
   const hasPreview = !!previewImage;
-  const isLoading = !isConverting || isRetrying;
+  const isLoading = isConverting || isRetrying;
 
   if (hasPreview) {
     return (
