@@ -108,7 +108,7 @@ export async function storeConversionResult({
     });
 
     // Generate filename and upload to R2
-    const fileName = `conversion_${conversionResultId}_${Date.now()}.png`;
+    const fileName = `${conversionResultId}.png`;
     const uploadData = await convex.mutation(api.r2.generateGenerationUploadUrl, {
       conversionResultId: conversionResultId as any,
       fileName: fileName,
@@ -167,7 +167,7 @@ export async function retryEditWithConvex(
 
     try {
       // Generate filename and upload to R2 using existing conversionResultId for same key
-      const fileName = `conversion_${existingConversionResultId}_${Date.now()}.png`;
+      const fileName = `${existingConversionResultId}.png`;
       const uploadData = await convexClient.mutation(api.r2.generateGenerationUploadUrl, {
         conversionResultId: existingConversionResultId as any,
         fileName: fileName,

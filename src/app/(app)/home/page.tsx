@@ -1,5 +1,5 @@
 "use client";
-import { Sidebar } from "@/components/shared/sidebar";
+
 import { HomePage } from "@/components/pages/home/home.page";
 import { Authenticated } from "convex/react";
 

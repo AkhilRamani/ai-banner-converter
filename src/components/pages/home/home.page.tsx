@@ -88,8 +88,8 @@ export function HomePage() {
 
 export function ConversionsLoadingSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-      {Array.from({ length: 3 }).map((_, index) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+      {Array.from({ length: 4 }).map((_, index) => (
         <div key={index} className="flex flex-col gap-4 animate-pulse">
           <div className="aspect-square rounded-md overflow-hidden">
             <div className="w-full h-full bg-gradient-to-br from-neutral-200/40 to-neutral-200/80"></div>
