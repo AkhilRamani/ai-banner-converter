@@ -7,8 +7,8 @@ import { withAuth } from "@workos-inc/authkit-nextjs";
 
 export interface ConversionResult {
   success: boolean;
+  conversionResultId: string;
   imageUrl?: string;
-  error?: string;
 }
 
 export interface ConversionOptions extends GeminiConversionOptions {
@@ -35,45 +35,28 @@ const fetchImageFromSignedUrl = async (signedUrl: string) => {
 };
 
 export async function convertImageWithConvex(options: ConversionOptions, conversionId: string): Promise<ConversionResult> {
-  try {
-    const sourceImageFile = await fetchImageFromSignedUrl(options.signedUrl);
-    const result = await convertImageAspectRatio(sourceImageFile, options);
+  const sourceImageFile = await fetchImageFromSignedUrl(options.signedUrl);
+  const result = await convertImageAspectRatio(sourceImageFile, options);
 
-    if (!result.success || !result.imageData) {
-      return {
-        success: false,
-        error: result.error || "Conversion failed",
-      };
-    }
-
-    // Store conversion result with R2 upload
-    const storeResult = await storeConversionResult({
-      conversionId,
-      platform: options.platform,
-      format: options.format,
-      imageData: result.imageData,
-      width: options.targetWidth,
-      height: options.targetHeight,
-    });
-
-    if (!storeResult.success) {
-      return {
-        success: false,
-        error: storeResult.error || "Failed to store conversion result",
-      };
-    }
-
-    return {
-      success: true,
-      imageUrl: `data:image/png;base64,${result.imageData.toString("base64")}`,
-    };
-  } catch (error) {
-    console.error("Error in convertImageWithConvex:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Conversion failed",
-    };
+  if (!result.imageData) {
+    throw new Error("Conversion failed");
   }
+
+  // Store conversion result with R2 upload
+  const storeResult = await storeConversionResult({
+    conversionId,
+    platform: options.platform,
+    format: options.format,
+    imageData: result.imageData,
+    width: options.targetWidth,
+    height: options.targetHeight,
+  });
+
+  return {
+    success: true,
+    imageUrl: `data:image/png;base64,${result.imageData.toString("base64")}`,
+    conversionResultId: storeResult.conversionResultId,
+  };
 }
 
 /**
@@ -96,50 +79,42 @@ export async function storeConversionResult({
   imageData: Buffer;
   width?: number;
   height?: number;
-}): Promise<{ success: boolean; conversionResultId?: string; error?: string }> {
+}): Promise<{ conversionResultId: string }> {
   const convex = await createConvexClient();
 
-  try {
-    // Create conversion result record
-    const conversionResultId = await convex.mutation(api.functions.conversionResults.createConversionResult, {
-      conversionId: conversionId as any,
-      platform: platform.toLowerCase() as any,
-      format: format,
-    });
+  // Create conversion result record
+  const conversionResultId = await convex.mutation(api.functions.conversionResults.createConversionResult, {
+    conversionId: conversionId as any,
+    platform: platform.toLowerCase() as any,
+    format: format,
+  });
 
-    // Generate filename and upload to R2
-    const fileName = `${conversionResultId}.png`;
-    const uploadData = await convex.mutation(api.r2.generateGenerationUploadUrl, {
-      conversionResultId: conversionResultId as any,
-      fileName: fileName,
-    });
+  // Generate filename and upload to R2
+  const fileName = `${conversionResultId}.png`;
+  const uploadData = await convex.mutation(api.r2.generateGenerationUploadUrl, {
+    conversionResultId: conversionResultId as any,
+    fileName: fileName,
+  });
 
-    const uploadResponse = await fetch(uploadData.url, {
-      method: "PUT",
-      body: Buffer.from(imageData),
-      headers: { "Content-Type": "image/png" },
-    });
+  const uploadResponse = await fetch(uploadData.url, {
+    method: "PUT",
+    body: Buffer.from(imageData),
+    headers: { "Content-Type": "image/png" },
+  });
 
-    if (!uploadResponse.ok) {
-      throw new Error(`Failed to upload to R2: ${uploadResponse.statusText}`);
-    }
-
-    // Update conversion result with status and dimensions
-    await convex.mutation(api.functions.conversionResults.updateConversionResult, {
-      formatId: conversionResultId as any,
-      status: "completed",
-      width: width,
-      height: height,
-    });
-
-    return { success: true, conversionResultId };
-  } catch (error) {
-    console.error("Error in storeConversionResult:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to store conversion result",
-    };
+  if (!uploadResponse.ok) {
+    throw new Error(`Failed to upload to R2: ${uploadResponse.statusText}`);
   }
+
+  // Update conversion result with status and dimensions
+  await convex.mutation(api.functions.conversionResults.updateConversionResult, {
+    formatId: conversionResultId as any,
+    status: "completed",
+    width: width,
+    height: height,
+  });
+
+  return { conversionResultId };
 }
 
 /**
@@ -151,62 +126,44 @@ export async function retryEditWithConvex(
   options: ConversionOptions & { instruction: string },
   existingConversionResultId: string
 ): Promise<ConversionResult> {
-  try {
-    const sourceImageFile = await fetchImageFromSignedUrl(options.signedUrl);
-    const result = await editWithInstruction(sourceImageFile, options.instruction, options.targetWidth, options.targetHeight);
+  const sourceImageFile = await fetchImageFromSignedUrl(options.signedUrl);
+  const result = await editWithInstruction(sourceImageFile, options.instruction, options.targetWidth, options.targetHeight);
 
-    if (!result.success || !result.imageData) {
-      return {
-        success: false,
-        error: result.error || "Retry edit failed",
-      };
-    }
-
-    // Store in R2 and update existing conversion result record using same key for replacement
-    const convexClient = await createConvexClient();
-
-    try {
-      // Generate filename and upload to R2 using existing conversionResultId for same key
-      const fileName = `${existingConversionResultId}.png`;
-      const uploadData = await convexClient.mutation(api.r2.generateGenerationUploadUrl, {
-        conversionResultId: existingConversionResultId as any,
-        fileName: fileName,
-      });
-
-      const uploadResponse = await fetch(uploadData.url, {
-        method: "PUT",
-        body: Buffer.from(result.imageData),
-        headers: { "Content-Type": "image/png" },
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error(`Failed to upload to R2: ${uploadResponse.statusText}`);
-      }
-
-      // Update conversion result with status and dimensions
-      await convexClient.mutation(api.functions.conversionResults.updateConversionResult, {
-        formatId: existingConversionResultId as any,
-        status: "completed",
-        width: options.targetWidth,
-        height: options.targetHeight,
-      });
-    } catch (error) {
-      console.error("Error storing retry conversion result:", error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to store retry conversion result",
-      };
-    }
-
-    return {
-      success: true,
-      imageUrl: `data:image/png;base64,${result.imageData.toString("base64")}`,
-    };
-  } catch (error) {
-    console.error("Error in retryEditWithConvex:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Retry edit failed",
-    };
+  if (!result.imageData) {
+    throw new Error("Conversion failed");
   }
+
+  // Store in R2 and update existing conversion result record using same key for replacement
+  const convexClient = await createConvexClient();
+
+  // Generate filename and upload to R2 using existing conversionResultId for same key
+  const fileName = `${existingConversionResultId}.png`;
+  const uploadData = await convexClient.mutation(api.r2.generateGenerationUploadUrl, {
+    conversionResultId: existingConversionResultId as any,
+    fileName: fileName,
+  });
+
+  const uploadResponse = await fetch(uploadData.url, {
+    method: "PUT",
+    body: Buffer.from(result.imageData),
+    headers: { "Content-Type": "image/png" },
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error(`Failed to upload to R2: ${uploadResponse.statusText}`);
+  }
+
+  // Update conversion result with status and dimensions
+  await convexClient.mutation(api.functions.conversionResults.updateConversionResult, {
+    formatId: existingConversionResultId as any,
+    status: "completed",
+    width: options.targetWidth,
+    height: options.targetHeight,
+  });
+
+  return {
+    success: true,
+    conversionResultId: existingConversionResultId,
+    imageUrl: `data:image/png;base64,${result.imageData.toString("base64")}`,
+  };
 }

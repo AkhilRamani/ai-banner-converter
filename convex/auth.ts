@@ -21,11 +21,11 @@ export const requireAuth = async (ctx: any): Promise<string> => {
  * @returns Promise<Doc<"conversions">> - The conversion document if user owns it
  * @throws Error if user is not authenticated or doesn't own the conversion
  */
-export const requireConversionOwnership = async (ctx: any, conversionId: any): Promise<any> => {
+export const requireConversionOwnership = async (ctx: any, conversionId: any): Promise<{ userId: string }> => {
   const userId = await requireAuth(ctx);
   const conversion = await ctx.db.get(conversionId);
   if (!conversion || conversion.userId !== userId) {
     throw new Error("Access denied");
   }
-  return conversion;
+  return { userId };
 };

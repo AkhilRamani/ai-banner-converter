@@ -114,9 +114,11 @@ export const deleteConversionResult = mutation({
       throw new Error("Format result not found");
     }
 
-    // Verify the user owns the conversion this format result belongs to
-    await requireConversionOwnership(ctx, formatResult.conversionId);
+    const { userId } = await requireConversionOwnership(ctx, formatResult.conversionId);
 
     await ctx.db.delete(args.formatId);
+
+    const objectKey = `${userId}/generations/${args.formatId}`;
+    r2.deleteObject(ctx, objectKey);
   },
 });

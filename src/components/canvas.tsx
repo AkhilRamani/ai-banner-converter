@@ -11,6 +11,8 @@ import { useImageConverter, ConversionResultWithSignedUrl } from "@/lib/hooks/us
 import { Doc } from "../../convex/_generated/dataModel";
 import { PlaceholderBox } from "./placeholder-box";
 import { PlatformIcon } from "./shared/platform-icon";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 interface CanvasProps {
   conversion?: Doc<"conversions"> & { signedUrl?: string };
@@ -34,6 +36,9 @@ export function Canvas({ conversion, conversionResults }: CanvasProps = {}) {
   });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Mutation for deleting conversion results
+  const deleteConversionResultMutation = useMutation(api.functions.conversionResults.deleteConversionResult);
 
   // Format selection handlers
   const handleFormatToggle = useCallback(
@@ -104,20 +109,29 @@ export function Canvas({ conversion, conversionResults }: CanvasProps = {}) {
             </div>
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {formats.map((formFactor) => (
-                <PlaceholderBox
-                  key={formFactor.name}
-                  formFactor={formFactor}
-                  conversionResult={localConversionResults[formFactor.name]}
-                  previewImage={localConversionResults[formFactor.name]?.success ? localConversionResults[formFactor.name]?.imageUrl : undefined}
-                  isConverting={processingFormats.has(formFactor.name)}
-                  isRetrying={processingFormats.has(formFactor.name)}
-                  onDownload={() => downloadImage(formFactor.name)}
-                  onRetry={() => retryConversion(formFactor.name)}
-                  onRetryWithMessage={(message) => retryConversionWithMessage(formFactor.name, message)}
-                  onConvert={() => convertSingleFormat(formFactor.name)}
-                />
-              ))}
+              {formats.map((formFactor) => {
+                const localResult = localConversionResults[formFactor.name];
+
+                return (
+                  <PlaceholderBox
+                    key={formFactor.name}
+                    formFactor={formFactor}
+                    conversionResult={localResult}
+                    previewImage={localResult?.success ? localResult.imageUrl : undefined}
+                    isConverting={processingFormats.has(formFactor.name)}
+                    isRetrying={processingFormats.has(formFactor.name)}
+                    onDownload={() => downloadImage(formFactor.name)}
+                    onRetry={() => retryConversion(formFactor.name)}
+                    onRetryWithMessage={(message) => retryConversionWithMessage(formFactor.name, message)}
+                    onConvert={() => convertSingleFormat(formFactor.name)}
+                    onDelete={async () => {
+                      if (localResult?.conversionResultId) {
+                        await deleteConversionResultMutation({ formatId: localResult.conversionResultId as any });
+                      }
+                    }}
+                  />
+                );
+              })}
             </div>
           </div>
         ))}

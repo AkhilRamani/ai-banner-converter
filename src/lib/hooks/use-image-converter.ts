@@ -1,10 +1,17 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { getFormFactor } from "@/lib/formats";
-import { editImageWithInstructionAction, ConversionResult } from "@/lib/actions";
 import { convertImageWithConvex, retryEditWithConvex } from "@/lib/conversionActions";
 import { Doc } from "../../../convex/_generated/dataModel";
+
+// Client-side local conversion result type (separate from server types)
+export interface LocalConversionResult {
+  success: boolean;
+  imageUrl?: string;
+  error?: string;
+  conversionResultId: string;
+}
 
 // Extended conversion result type that includes signedUrl from the mutation
 export type ConversionResultWithSignedUrl = Doc<"conversionResults"> & { signedUrl?: string };
@@ -18,7 +25,7 @@ export interface UseImageConverterProps {
 }
 
 export interface ImageConverterState {
-  conversionResults: Record<string, ConversionResult>;
+  conversionResults: Record<string, LocalConversionResult>;
   processingFormats: Set<string>;
   selectedFormats: string[];
 }
@@ -34,39 +41,39 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
 
   // Initialize state from provided conversion results
   useEffect(() => {
-    if (conversionResults && conversionResults.length > 0) {
-      const conversionResultsMap: Record<string, ConversionResult> = {};
-      const existingFormats = new Set<string>();
+    const conversionResultsMap: Record<string, LocalConversionResult> = {};
+    const existingFormats = new Set<string>();
 
-      conversionResults.forEach((result) => {
-        const formatName = result.format;
-        existingFormats.add(formatName);
+    conversionResults?.forEach((result) => {
+      const formatName = result.format;
+      existingFormats.add(formatName);
 
-        if (result.status === "completed") {
-          // Use signedUrl if available
-          const imageUrl = (result as any).signedUrl;
-          if (imageUrl) {
-            conversionResultsMap[formatName] = {
-              success: true,
-              imageUrl,
-            };
-          }
-        } else if (result.status === "failed") {
+      if (result.status === "completed") {
+        // Use signedUrl if available
+        const imageUrl = (result as any).signedUrl;
+        if (imageUrl) {
           conversionResultsMap[formatName] = {
-            success: false,
-            error: "Conversion failed",
+            success: true,
+            imageUrl,
+            conversionResultId: result._id,
           };
         }
-      });
+      } else if (result.status === "failed") {
+        conversionResultsMap[formatName] = {
+          success: false,
+          error: "Conversion failed",
+          conversionResultId: result._id,
+        };
+      }
+    });
 
-      console.log("🔄 useImageConverter: Updating conversion results:", conversionResultsMap);
+    console.log("🔄 useImageConverter: Updating conversion results:", conversionResultsMap);
 
-      setState((prevState) => ({
-        ...prevState,
-        conversionResults: conversionResultsMap,
-        selectedFormats: Array.from(existingFormats),
-      }));
-    }
+    setState((prevState) => ({
+      ...prevState,
+      conversionResults: conversionResultsMap,
+      selectedFormats: Array.from(existingFormats),
+    }));
   }, [conversionResults]);
 
   const updateState = useCallback((updates: Partial<ImageConverterState> | ((prev: ImageConverterState) => Partial<ImageConverterState>)) => {
@@ -158,8 +165,7 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
       } catch (error) {
         console.error("❌ convertSingleFormat: Error converting format:", error);
         const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
-        alert(`Error: ${errorMessage}`);
-      } finally {
+
         // Clear loading state
         updateState((prevState) => ({
           processingFormats: new Set([...prevState.processingFormats].filter((f) => f !== formatName)),
@@ -227,8 +233,7 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
       } catch (error) {
         console.error("Error retrying conversion:", error);
         const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
-        alert(`Error: ${errorMessage}`);
-      } finally {
+
         // Clear loading state
         updateState((prevState) => ({
           processingFormats: new Set([...prevState.processingFormats].filter((f) => f !== formatName)),
@@ -296,8 +301,7 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
       } catch (error) {
         console.error("Error retrying conversion with custom message:", error);
         const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
-        alert(`Error: ${errorMessage}`);
-      } finally {
+
         // Clear loading state
         updateState((prevState) => ({
           processingFormats: new Set([...prevState.processingFormats].filter((f) => f !== formatName)),

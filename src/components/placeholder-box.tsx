@@ -1,17 +1,17 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Download, Loader2, RotateCcw, Sparkle } from "lucide-react";
+import { Download, Loader2, RotateCcw, Trash } from "lucide-react";
 import { FormFactor } from "@/lib/formats";
-import { ConversionResult } from "@/lib/actions";
 import { cn } from "@/lib/utils";
+import { LocalConversionResult } from "@/lib/hooks/use-image-converter";
 import { RetryWithMessageDialog } from "./retry-with-message-dialog";
 import { ButtonCustom } from "./ui/custom/button-custom";
+import { ConfirmActionDialog } from "./shared/confirm-action-dialog";
 
 export interface PlaceholderBoxProps {
   formFactor: FormFactor;
-  conversionResult?: ConversionResult;
+  conversionResult?: LocalConversionResult;
   previewImage?: string;
   isConverting?: boolean;
   isRetrying?: boolean;
@@ -19,6 +19,7 @@ export interface PlaceholderBoxProps {
   onRetry?: () => void;
   onRetryWithMessage?: (message: string) => void;
   onConvert?: () => void;
+  onDelete?: () => Promise<void>;
   className?: string;
 }
 
@@ -32,12 +33,15 @@ export const PlaceholderBox = ({
   onRetry,
   onRetryWithMessage,
   onConvert,
+  onDelete,
   className,
 }: PlaceholderBoxProps) => {
   const aspectRatio = formFactor.width / formFactor.height;
   const isVeryWide = aspectRatio > 3;
   const isVeryTall = aspectRatio < 0.5;
+
   const [isRetryDialogOpen, setIsRetryDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Determine the current state
   const hasError = conversionResult && !conversionResult.success && conversionResult.error;
@@ -65,6 +69,12 @@ export const PlaceholderBox = ({
               </div>
             </div>
           )}
+
+          {isDeleting && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/50">
+              <Loader2 className="animate-spin opacity-50 size-8" />
+            </div>
+          )}
         </div>
 
         <div
@@ -76,6 +86,26 @@ export const PlaceholderBox = ({
           <ButtonCustom className={cn("size-8")} variant="ghost" size="icon" onClick={() => setIsRetryDialogOpen(true)}>
             <RotateCcw className="size-3.5" />
           </ButtonCustom>
+
+          <ConfirmActionDialog
+            title={`Delete ${formFactor.name}`}
+            description={`Are you sure you want to delete the ${formFactor.name}? This action cannot be undone.`}
+            onConfirm={async () => {
+              if (onDelete) {
+                setIsDeleting(true);
+                try {
+                  await onDelete();
+                } finally {
+                  setIsDeleting(false);
+                }
+              }
+            }}
+          >
+            <ButtonCustom className={cn("size-8")} variant="ghost" size="icon">
+              <Trash className="size-3.5" />
+            </ButtonCustom>
+          </ConfirmActionDialog>
+
           {!hasError && (
             <ButtonCustom className={cn("size-8")} variant="ghost" size="icon" onClick={onDownload}>
               <Download className="size-3.5" />
