@@ -127,6 +127,8 @@ export function Canvas({ conversion, conversionResults }: CanvasProps = {}) {
                     onDelete={async () => {
                       if (localResult?.conversionResultId) {
                         await deleteConversionResultMutation({ formatId: localResult.conversionResultId as any });
+                        // Remove format from selectedFormats after successful deletion
+                        toggleFormatSelection(formFactor.name);
                       }
                     }}
                   />

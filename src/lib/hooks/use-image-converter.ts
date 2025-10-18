@@ -42,7 +42,7 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
   // Initialize state from provided conversion results
   useEffect(() => {
     const conversionResultsMap: Record<string, LocalConversionResult> = {};
-    const existingFormats = new Set<string>();
+    const existingFormats = new Set<string>(state.selectedFormats);
 
     conversionResults?.forEach((result) => {
       const formatName = result.format;
@@ -121,7 +121,6 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
       // Set loading state immediately
       updateState((prevState) => ({
         processingFormats: new Set([...prevState.processingFormats, formatName]),
-        conversionResults: { ...prevState.conversionResults },
       }));
 
       // Remove existing result for this format
@@ -158,9 +157,10 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
 
         console.log("✅ convertSingleFormat: API call completed for", formatName, conversionResult);
 
-        // Update conversion result
+        // Update conversion result and clear loading state
         updateState((prevState) => ({
           conversionResults: { ...prevState.conversionResults, [formatName]: conversionResult },
+          processingFormats: new Set([...prevState.processingFormats].filter((f) => f !== formatName)),
         }));
       } catch (error) {
         console.error("❌ convertSingleFormat: Error converting format:", error);
@@ -226,9 +226,10 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
           conversionId
         );
 
-        // Update conversion result
+        // Update conversion result and clear loading state
         updateState((prevState) => ({
           conversionResults: { ...prevState.conversionResults, [formatName]: conversionResult },
+          processingFormats: new Set([...prevState.processingFormats].filter((f) => f !== formatName)),
         }));
       } catch (error) {
         console.error("Error retrying conversion:", error);
@@ -255,7 +256,6 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
       // Set loading state immediately
       updateState((prevState) => ({
         processingFormats: new Set([...prevState.processingFormats, formatName]),
-        conversionResults: { ...prevState.conversionResults },
       }));
 
       // Remove existing result for this format
@@ -294,9 +294,10 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
           existingConversionRecord._id
         );
 
-        // Update conversion result
+        // Update conversion result and clear loading state
         updateState((prevState) => ({
           conversionResults: { ...prevState.conversionResults, [formatName]: conversionResult },
+          processingFormats: new Set([...prevState.processingFormats].filter((f) => f !== formatName)),
         }));
       } catch (error) {
         console.error("Error retrying conversion with custom message:", error);
