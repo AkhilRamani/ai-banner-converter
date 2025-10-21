@@ -40,7 +40,6 @@ export const PlaceholderBox = ({
   const isVeryWide = aspectRatio > 3;
   const isVeryTall = aspectRatio < 0.5;
 
-  const [isRetryDialogOpen, setIsRetryDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Determine the current state
@@ -58,7 +57,18 @@ export const PlaceholderBox = ({
             aspectRatio: `${formFactor.width}/${formFactor.height}`,
           }}
         >
-          <img src={previewImage} alt={formFactor.name} className="object-contain w-full h-full" />
+          <RetryWithMessageDialog
+            lastConvertedImage={previewImage}
+            formatName={formFactor.name}
+            onRetryWithMessage={(message) => {
+              onRetryWithMessage?.(message);
+            }}
+            isRetrying={isRetrying}
+          >
+            <div role="button" className="hover:opacity-80 cursor-pointer">
+              <img src={previewImage} alt={formFactor.name} className="object-contain w-full h-full" />
+            </div>
+          </RetryWithMessageDialog>
 
           {/* Error overlay */}
           {hasError && (
@@ -83,7 +93,7 @@ export const PlaceholderBox = ({
             "hidde opacity-0 -mb-2 items-center group-hover:mb-0 group-hover:flex group-hover:opacity-100 ease-out duration-150"
           )}
         >
-          <ButtonCustom className={cn("size-8")} variant="ghost" size="icon" onClick={() => setIsRetryDialogOpen(true)}>
+          <ButtonCustom className={cn("size-8")} variant="ghost" size="icon">
             <RotateCcw className="size-3.5" />
           </ButtonCustom>
 
@@ -112,20 +122,6 @@ export const PlaceholderBox = ({
             </ButtonCustom>
           )}
         </div>
-
-        {/* Retry with Message Dialog */}
-        <RetryWithMessageDialog
-          isOpen={isRetryDialogOpen}
-          onOpenChange={setIsRetryDialogOpen}
-          lastConvertedImage={previewImage}
-          formatName={formFactor.name}
-          onRetryWithMessage={(message) => {
-            onRetryWithMessage?.(message);
-            setIsRetryDialogOpen(false);
-          }}
-          isRetrying={isRetrying}
-          trigger={<div />}
-        />
       </div>
     );
   }
