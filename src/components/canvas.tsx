@@ -25,9 +25,8 @@ export function Canvas({ conversion, conversionResults }: CanvasProps = {}) {
     processingFormats,
     selectedFormats,
     downloadImage,
-    retryConversion,
     retryConversionWithMessage,
-    convertSingleFormat,
+    convertFormat,
     toggleFormatSelection,
     batchUpdateFormats,
   } = useImageConverter({
@@ -121,9 +120,9 @@ export function Canvas({ conversion, conversionResults }: CanvasProps = {}) {
                     isConverting={processingFormats.has(formFactor.name)}
                     isRetrying={processingFormats.has(formFactor.name)}
                     onDownload={() => downloadImage(formFactor.name)}
-                    onRetry={() => retryConversion(formFactor.name)}
+                    onConvert={() => convertFormat(formFactor.name)}
+                    onRetry={() => convertFormat(formFactor.name, { retry: true })}
                     onRetryWithMessage={(message) => retryConversionWithMessage(formFactor.name, message)}
-                    onConvert={() => convertSingleFormat(formFactor.name)}
                     onDelete={async () => {
                       if (localResult?.conversionResultId) {
                         await deleteConversionResultMutation({ formatId: localResult.conversionResultId as any });

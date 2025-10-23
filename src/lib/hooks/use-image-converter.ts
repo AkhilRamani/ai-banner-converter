@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { getFormFactor } from "@/lib/formats";
-import { convertImageWithConvex, retryEditWithConvex } from "@/lib/conversionActions";
+import { convertImageWithConvex, retryOrEditWithConvex } from "@/lib/conversionActions";
 import { Doc } from "../../../convex/_generated/dataModel";
 
 // Client-side local conversion result type (separate from server types)
@@ -98,13 +98,13 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
     [state.conversionResults]
   );
 
-  const convertSingleFormat = useCallback(
-    async (formatName: string) => {
+  const convertFormat = useCallback(
+    async (formatName: string, { retry } = { retry: false }) => {
       // Use conversionId from conversion data
       const conversionId = conversion?._id;
 
       if (!conversionId) {
-        console.log("❌ convertSingleFormat: Missing conversionId", {
+        console.log("❌ convertFormat: Missing conversionId", {
           conversionIdFromData: conversion?._id,
         });
         return;
@@ -134,7 +134,7 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
       });
 
       try {
-        console.log("🚀 convertSingleFormat: Making API call for", formatName);
+        console.log("🚀 convertFormat: Making API call for", formatName);
 
         // Use the signed URL from conversion data if available
         const signedUrlToUse = conversion?.signedUrl;
@@ -143,88 +143,42 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
           throw new Error("No signed URL available for conversion");
         }
 
-        const conversionResult = await convertImageWithConvex(
-          {
-            platform: formFactor.platform,
-            format: formatName,
-            targetFormat: formatName,
-            targetWidth: formFactor.width,
-            targetHeight: formFactor.height,
-            signedUrl: signedUrlToUse,
-          },
-          conversionId
-        );
+        let conversionResult;
+        if (!retry) {
+          conversionResult = await convertImageWithConvex(
+            {
+              platform: formFactor.platform,
+              format: formatName,
+              targetFormat: formatName,
+              targetWidth: formFactor.width,
+              targetHeight: formFactor.height,
+              signedUrl: signedUrlToUse,
+            },
+            conversionId
+          );
+        } else {
+          // For retry with message, we need to find the existing conversion result record
+          // to get its ID for R2 key replacement
+          const existingConversionResultRecord = conversionResults?.find((result) => result.format === formatName);
+          if (!existingConversionResultRecord) {
+            throw new Error("No existing conversion record found for retry");
+          }
 
-        console.log("✅ convertSingleFormat: API call completed for", formatName, conversionResult);
-
-        // Update conversion result and clear loading state
-        updateState((prevState) => ({
-          conversionResults: { ...prevState.conversionResults, [formatName]: conversionResult },
-          processingFormats: new Set([...prevState.processingFormats].filter((f) => f !== formatName)),
-        }));
-      } catch (error) {
-        console.error("❌ convertSingleFormat: Error converting format:", error);
-        const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
-
-        // Clear loading state
-        updateState((prevState) => ({
-          processingFormats: new Set([...prevState.processingFormats].filter((f) => f !== formatName)),
-        }));
-      }
-    },
-    [conversion, updateState]
-  );
-
-  const retryConversion = useCallback(
-    async (formatName: string) => {
-      // Use conversionId from conversion data
-      const conversionId = conversion?._id;
-
-      if (!conversionId) return;
-
-      // Get formFactor for proper dimensions and platform detection
-      const formFactor = getFormFactor(formatName);
-
-      if (!formFactor) {
-        console.error(`No formFactor found for format: ${formatName}`);
-        return;
-      }
-
-      // Set loading state immediately
-      updateState((prevState) => ({
-        processingFormats: new Set([...prevState.processingFormats, formatName]),
-        conversionResults: { ...prevState.conversionResults },
-      }));
-
-      // Remove existing result for this format
-      updateState((prevState) => {
-        const newConversionResults = { ...prevState.conversionResults };
-        delete newConversionResults[formatName];
-
-        return {
-          conversionResults: newConversionResults,
-        };
-      });
-
-      try {
-        // Use the signed URL from conversion data if available
-        const signedUrlToUse = conversion?.signedUrl;
-
-        if (!signedUrlToUse) {
-          throw new Error("No signed URL available for retry");
+          conversionResult = await retryOrEditWithConvex(
+            {
+              platform: formFactor.platform,
+              format: formatName,
+              targetFormat: formatName,
+              targetWidth: formFactor.width,
+              targetHeight: formFactor.height,
+              signedUrl: signedUrlToUse,
+              edit: false,
+            },
+            existingConversionResultRecord._id
+          );
         }
 
-        const conversionResult = await convertImageWithConvex(
-          {
-            platform: formFactor.platform,
-            format: formatName,
-            targetFormat: formatName,
-            targetWidth: formFactor.width,
-            targetHeight: formFactor.height,
-            signedUrl: signedUrlToUse,
-          },
-          conversionId
-        );
+        console.log("✅ convertFormat: API call completed for", formatName, conversionResult);
 
         // Update conversion result and clear loading state
         updateState((prevState) => ({
@@ -232,7 +186,7 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
           processingFormats: new Set([...prevState.processingFormats].filter((f) => f !== formatName)),
         }));
       } catch (error) {
-        console.error("Error retrying conversion:", error);
+        console.error("❌ convertFormat: Error converting format:", error);
         const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
 
         // Clear loading state
@@ -275,13 +229,12 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
 
         // For retry with message, we need to find the existing conversion result record
         // to get its ID for R2 key replacement
-        const existingConversionRecord = conversionResults?.find((result) => result.format === formatName);
-
-        if (!existingConversionRecord) {
+        const existingConversionResultRecord = conversionResults?.find((result) => result.format === formatName);
+        if (!existingConversionResultRecord) {
           throw new Error("No existing conversion record found for retry");
         }
 
-        const conversionResult = await retryEditWithConvex(
+        const conversionResult = await retryOrEditWithConvex(
           {
             platform: formFactor.platform,
             format: formatName,
@@ -289,9 +242,10 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
             targetWidth: formFactor.width,
             targetHeight: formFactor.height,
             signedUrl: existingConversionResult.imageUrl,
+            edit: true,
             instruction: customMessage.trim(),
           },
-          existingConversionRecord._id
+          existingConversionResultRecord._id
         );
 
         // Update conversion result and clear loading state
@@ -335,9 +289,8 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
   return {
     ...state,
     downloadImage,
-    retryConversion,
     retryConversionWithMessage,
-    convertSingleFormat,
+    convertFormat,
     toggleFormatSelection,
     batchUpdateFormats,
   };

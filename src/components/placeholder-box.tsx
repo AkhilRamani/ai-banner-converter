@@ -93,7 +93,7 @@ export const PlaceholderBox = ({
             "hidde opacity-0 -mb-2 items-center group-hover:mb-0 group-hover:flex group-hover:opacity-100 ease-out duration-150"
           )}
         >
-          <ButtonCustom className={cn("size-8")} variant="ghost" size="icon">
+          <ButtonCustom className={cn("size-8")} variant="ghost" size="icon" onClick={onRetry}>
             <RotateCcw className="size-3.5" />
           </ButtonCustom>
 

@@ -122,18 +122,23 @@ export async function storeConversionResult({
  * - Updates existing conversion result instead of creating new one
  * - Uses same R2 key for replacement
  */
-export async function retryEditWithConvex(
-  options: ConversionOptions & { instruction: string },
+export async function retryOrEditWithConvex(
+  options: ConversionOptions & ({ instruction: string; edit: true } | { instruction?: never; edit: false }),
   existingConversionResultId: string
 ): Promise<ConversionResult> {
   const sourceImageFile = await fetchImageFromSignedUrl(options.signedUrl);
-  const result = await editWithInstruction(sourceImageFile, options.instruction, options.targetWidth, options.targetHeight);
+
+  let result;
+  if (options.edit) {
+    result = await editWithInstruction(sourceImageFile, options.instruction, options.targetWidth, options.targetHeight);
+  } else {
+    result = await convertImageAspectRatio(sourceImageFile, options);
+  }
 
   if (!result.imageData) {
     throw new Error("Conversion failed");
   }
 
-  // Store in R2 and update existing conversion result record using same key for replacement
   const convexClient = await createConvexClient();
 
   // Generate filename and upload to R2 using existing conversionResultId for same key
