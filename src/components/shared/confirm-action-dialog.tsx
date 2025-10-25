@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { DialogContentCustom } from "../ui/custom/dialog-custom";
 import { Dialog, DialogTrigger } from "../ui/dialog";
 import { ButtonCustom } from "../ui/custom/button-custom";
+import { useToggle } from "@/lib/hooks/use-toggle";
 
 interface ConfirmActionDialogProps {
-  children: React.ReactNode;
+  open?: boolean;
+  children?: React.ReactNode;
   title?: string;
   description?: string;
   variant?: "default" | "destructive" | "main";
@@ -12,32 +14,29 @@ interface ConfirmActionDialogProps {
 }
 
 export const ConfirmActionDialog: React.FC<ConfirmActionDialogProps> = ({
+  open,
   children,
   title = "Confirm Action",
   description = "Are you sure you want to proceed? This action cannot be undone.",
   variant = "main",
   onConfirm,
 }) => {
-  const [open, setOpen] = useState(false);
+  const { value: isOpen, toggle: toggleIsOpen } = useToggle();
 
   const handleConfirm = async () => {
     onConfirm();
-    setOpen(false);
-  };
-
-  const handleCancel = () => {
-    setOpen(false);
+    toggleIsOpen();
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={toggleIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContentCustom title={title}>
         <div className="space-y-5 w-full">
           <p className="text-base text-muted-foreground leading-relaxed">{description}</p>
 
           <div className="flex justify-end gap-2 pt-4">
-            <ButtonCustom variant="outline" onClick={handleCancel} className="w-28">
+            <ButtonCustom variant="outline" onClick={toggleIsOpen} className="w-28">
               Cancel
             </ButtonCustom>
             <ButtonCustom variant={variant} onClick={handleConfirm} className="w-28">

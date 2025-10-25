@@ -1,57 +1,12 @@
 "use client";
 
 import { ButtonCustom } from "@/components/ui/custom/button-custom";
-import { Plus, Image as ImageIcon, MoreHorizontal } from "lucide-react";
+import { Plus } from "lucide-react";
 import { NewConversionDialog } from "@/components/shared/new-conversion-dialog";
 import { NoConversionCTA } from "@/components/shared/CTAs/no-conversion-cta";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import Link from "next/link";
-import Image from "next/image";
-
-// Conversion Tile Component
-function ConversionTile({ conversion }: { conversion: any }) {
-  return (
-    <div className="flex flex-col gap-4 justify-center">
-      <div className="flex flex-1- items-center">
-        <Link href={`/convert/${conversion._id}`} className="flex-1 hover:shadow-lg shadow-primary/10  transition-shadow rounded-md overflow-hidden">
-          {conversion.signedUrl ? (
-            <div className="relative w-full flex">
-              <Image
-                src={conversion.signedUrl}
-                alt={conversion.name || conversion.fileName}
-                className="object-contain flex-1"
-                width={200}
-                height={200}
-              />
-            </div>
-          ) : (
-            <div className="w-full flex items-center justify-center bg-gray-50">
-              <ImageIcon className="w-10 h-10 text-gray-300" />
-            </div>
-          )}
-        </Link>
-      </div>
-      <div className="flex items-center justify-between pl-2">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-base font-medium text-gray-900 truncate mb-1" title={conversion.name || conversion.fileName}>
-            {conversion.name || conversion.fileName}
-          </h3>
-          <p className="text-sm text-gray-500">
-            {new Date(conversion.updatedAt).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </p>
-        </div>
-        <ButtonCustom variant="ghost" size="icon" className="">
-          <MoreHorizontal className="w-4 h-4" />
-        </ButtonCustom>
-      </div>
-    </div>
-  );
-}
+import { ConversionTile } from "./conversionTile";
 
 export function HomePage() {
   const conversions = useQuery(api.functions.conversions.getConversions, {});
