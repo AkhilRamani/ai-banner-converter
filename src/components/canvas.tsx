@@ -121,8 +121,8 @@ export function Canvas({ conversion, conversionResults }: CanvasProps = {}) {
                     isRetrying={processingFormats.has(formFactor.name)}
                     onDownload={() => downloadImage(formFactor.name)}
                     onConvert={() => convertFormat(formFactor.name)}
-                    onRetry={() => convertFormat(formFactor.name, { retry: true })}
-                    onRetryWithMessage={(message) => retryConversionWithMessage(formFactor.name, message)}
+                    onRetry={() => convertFormat(formFactor.name, { retry: true, conversionResultId: localResult.conversionResultId })}
+                    onRetryWithMessage={(message) => retryConversionWithMessage(formFactor.name, localResult.conversionResultId, message)}
                     onDelete={async () => {
                       if (localResult?.conversionResultId) {
                         await deleteConversionResultMutation({ formatId: localResult.conversionResultId as any });

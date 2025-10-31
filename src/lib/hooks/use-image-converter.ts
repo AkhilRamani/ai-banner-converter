@@ -99,7 +99,7 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
   );
 
   const convertFormat = useCallback(
-    async (formatName: string, { retry } = { retry: false }) => {
+    async (formatName: string, { retry, conversionResultId }: { retry: boolean; conversionResultId?: string } = { retry: false }) => {
       // Use conversionId from conversion data
       const conversionId = conversion?._id;
 
@@ -157,13 +157,6 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
             conversionId
           );
         } else {
-          // For retry with message, we need to find the existing conversion result record
-          // to get its ID for R2 key replacement
-          const existingConversionResultRecord = conversionResults?.find((result) => result.format === formatName);
-          if (!existingConversionResultRecord) {
-            throw new Error("No existing conversion record found for retry");
-          }
-
           conversionResult = await retryOrEditWithConvex(
             {
               platform: formFactor.platform,
@@ -174,7 +167,7 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
               signedUrl: signedUrlToUse,
               edit: false,
             },
-            existingConversionResultRecord._id
+            conversionResultId!
           );
         }
 
@@ -199,7 +192,7 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
   );
 
   const retryConversionWithMessage = useCallback(
-    async (formatName: string, customMessage: string) => {
+    async (formatName: string, conversionResultId: string, customMessage: string) => {
       // Get the existing converted image to use as the source for editing
       const existingConversionResult = state.conversionResults[formatName];
       if (!existingConversionResult?.success || !existingConversionResult.imageUrl) {
@@ -227,13 +220,6 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
         const formFactor = getFormFactor(formatName);
         if (!formFactor) return;
 
-        // For retry with message, we need to find the existing conversion result record
-        // to get its ID for R2 key replacement
-        const existingConversionResultRecord = conversionResults?.find((result) => result.format === formatName);
-        if (!existingConversionResultRecord) {
-          throw new Error("No existing conversion record found for retry");
-        }
-
         const conversionResult = await retryOrEditWithConvex(
           {
             platform: formFactor.platform,
@@ -245,7 +231,7 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
             edit: true,
             instruction: customMessage.trim(),
           },
-          existingConversionResultRecord._id
+          conversionResultId
         );
 
         // Update conversion result and clear loading state
