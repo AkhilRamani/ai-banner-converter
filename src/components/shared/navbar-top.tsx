@@ -4,8 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu, X, Home, Wand2, Wand } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Menu, X, Home, Wand2, Wand, User, LogOut } from "lucide-react";
 import { useAuth } from "@workos-inc/authkit-nextjs/components";
+import { DropdownMenuItemCustom } from "../ui/custom/dropdown-menu-custom";
 
 export function NavbarTop() {
   const { user, signOut } = useAuth();
@@ -44,9 +46,6 @@ export function NavbarTop() {
             <Link href="/home" className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900">
               Convert
             </Link>
-            <Link href="/docs" className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900">
-              Docs
-            </Link>
             <Link href="/pricing" className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900">
               Pricing
             </Link>
@@ -61,12 +60,37 @@ export function NavbarTop() {
                   <Button size="sm">Sign In</Button>
                 </Link>
               ) : (
-                <Button variant="ghost" className="flex items-center gap-2 px-3">
-                  <Avatar className="size-8">
-                    <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
-                    <AvatarFallback className="text-xs text-primary bg-muted-foreground/20">JD</AvatarFallback>
-                  </Avatar>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center gap-2 px-0.5 rounded-full cursor-pointer hover:bg-neutral-300">
+                      <Avatar className="size-8">
+                        {user.profilePictureUrl && <AvatarImage src={user.profilePictureUrl} alt="User" />}
+                        <AvatarFallback className="text-xs text-primary bg-muted-foreground/20">
+                          {user.firstName?.charAt(0)}
+                          {user.lastName?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-64 mt-2 rounded-xl">
+                    <DropdownMenuItemCustom asChild>
+                      <Link href="/home" className="flex items-center gap-2">
+                        <Wand2 className="w-4 h-4" />
+                        Convert
+                      </Link>
+                    </DropdownMenuItemCustom>
+                    <DropdownMenuItemCustom asChild>
+                      <Link href="/profile" className="flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        Profile
+                      </Link>
+                    </DropdownMenuItemCustom>
+                    <DropdownMenuItemCustom onClick={async () => await signOut()}>
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </DropdownMenuItemCustom>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
 
@@ -116,8 +140,10 @@ export function NavbarTop() {
               <div className="pt-4 mt-4 border-t border-gray-200">
                 <div className="flex items-center gap-3 px-3 py-2 rounded-lg">
                   <Avatar className="w-8 h-8">
-                    <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
-                    <AvatarFallback className="text-sm text-white bg-gradient-to-br from-blue-600 to-purple-600">JD</AvatarFallback>
+                    {user?.profilePictureUrl && <AvatarImage src={user.profilePictureUrl} alt="User" />}
+                    <AvatarFallback className="text-sm text-white bg-gradient-to-br from-blue-600 to-purple-600">
+                      {user ? `${user.firstName?.charAt(0)}${user.lastName?.charAt(0)}` : "U"}
+                    </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="text-sm font-medium text-gray-900">John Doe</p>

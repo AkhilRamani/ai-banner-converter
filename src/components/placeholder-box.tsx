@@ -65,8 +65,8 @@ export const PlaceholderBox = ({
             }}
             isRetrying={isRetrying}
           >
-            <div role="button" className="hover:opacity-80 cursor-pointer">
-              <img src={previewImage} alt={formFactor.name} className="object-contain w-full h-full" />
+            <div role="button" className="hover:opacity-80 cursor-pointer h-full">
+              <img src={previewImage} alt={formFactor.name} className="object-cover w-full h-full" />
             </div>
           </RetryWithMessageDialog>
 
