@@ -87,12 +87,9 @@ export const useImageConverter = ({ conversion, conversionResults }: UseImageCon
     (formatName: string) => {
       const conversionResult = state.conversionResults[formatName];
       if (conversionResult?.success && conversionResult.imageUrl) {
-        const link = document.createElement("a");
-        link.href = conversionResult.imageUrl;
-        link.download = `${formatName.replace(/\s+/g, "_").toLowerCase()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const filename = `${formatName.replace(/\s+/g, "_").toLowerCase()}.png`;
+        const downloadUrl = `/api/download?url=${encodeURIComponent(conversionResult.imageUrl)}&filename=${encodeURIComponent(filename)}`;
+        window.open(downloadUrl, "_blank");
       }
     },
     [state.conversionResults]

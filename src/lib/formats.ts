@@ -102,10 +102,10 @@ export const FORM_FACTORS_BY_PLATFORM: Record<string, FormFactor[]> = {
       description: "Hero section banner for websites",
     },
   ],
-  "Google Ads": [
+  Google: [
     {
       name: "Google Display Ad",
-      platform: "Google Ads",
+      platform: "Google",
       width: 300,
       height: 250,
       aspectRatio: "1.2:1",

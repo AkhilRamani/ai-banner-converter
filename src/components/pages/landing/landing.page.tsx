@@ -67,33 +67,33 @@ export const LandingPage = () => {
       {/* Hero Section */}
       <section className="pt-24 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
+          <div className="flex flex-col items-center">
+            <div className="max-w-2/3 flex flex-col text-center items-center">
               <div className="mb-6">
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-neutral-100 text-neutral-800">
                   <Sparkles className="w-4 h-4 mr-2" />
                   AI-Powered Design Resizing
                 </span>
               </div>
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-neutral-900 mb-6 leading-tight">
+              <h1 className="text-4xl sm:text-6xl lg:text-6xl font-medium text-neutral-900 mb-6 leading-tight-">
                 One Design.
                 <br />
                 <span className="text-blue-600">Infinite Formats.</span>
               </h1>
-              <p className="text-xl text-neutral-600 mb-8 leading-relaxed">
+              <p className="text-lg text-neutral-600 mb-8">
                 Upload once — and let AI redesign your banner, ad, or social post for every platform. Content-aware resizing that looks like a human
                 designer did it.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Link href="/home">
-                  <ButtonCustom variant="main" size="lg" className="px-8 py-4 text-lg">
-                    <Sparkles className="w-5 h-5 mr-2" />
+                  <ButtonCustom variant="main">
+                    <Sparkles />
                     Try for Free
                   </ButtonCustom>
                 </Link>
-                <ButtonCustom variant="outline" size="lg" className="px-8 py-4 text-lg">
-                  <Play className="w-5 h-5 mr-2" />
+                <ButtonCustom variant="outline">
+                  <Play />
                   Watch Demo
                 </ButtonCustom>
               </div>

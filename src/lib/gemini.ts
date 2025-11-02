@@ -59,12 +59,12 @@ export const convertImageAspectRatio = async (sourceImageFile: File, options: Co
 
   // Build base prompt
   const basePrompt = `Can you analyse first marketing cover image and convert that into attached second picture as the reference for final aspect ratio. Use second image as a template to fill in.
-Make sure design language remains intact, prefer to avoid blank spaces and feel free to move around objects as needed.
-This query is to changing aspect ratio of original image as graphics designer would redesign it.
+I want to change aspect ratio of original image as graphics designer would design it for ${options.targetFormat}.
+Make sure design language and feel remains intact, prefer to avoid blank spaces and feel free to move around objects as needed without breaking original design identity.
 If source and target image differs in vertical and horizontal then try to organise objects in target image space, example vertically or horizontally.
-Do not duplicate texts. Keep proper consistant spacing around texts from edges for visual balance. Remove text line breaks and extend when needed to fill extra space.
-Understand the image content composition and try to keep the same feel as original image. Prefer to do not destruct main objects but organise to utilize available space and minimise empty same color areas without repeating.
-Never leave large empty spaces and try to organise objects, elements in such a way that never happens. Prefer not to remove any elements as far as possible.`;
+Do not duplicate texts. Keep proper consistant spacing around texts for visual balance. Remove text line breaks and extend when needed to fill extra space.
+Understand the image content composition and try to keep the same feel as original. Prefer to do not destruct or modify main objects but organise to utilize available space and minimise empty same color areas without repeating.
+Never leave large empty spaces and try to organise, expand or shrink objects, elements in such a way that never happens. Prefer not to remove any elements as far as possible.`;
 
   // Add custom message if provided
   const finalPrompt = options.customMessage ? `${basePrompt}\n\nAdditional instructions: ${options.customMessage}` : basePrompt;
@@ -146,10 +146,10 @@ Important guidelines:
 Please apply these modifications while maintaining the overall quality and coherence of the original image.`;
 
   // Add target format instructions if target dimensions are provided
+  // Target format reference: ${targetWidth}x${targetHeight}px
   if (targetWidth && targetHeight && base64TargetFormatImage) {
-    promptText = `Please modify this image according to the following instructions: ${instruction}
-
-Target format reference: ${targetWidth}x${targetHeight}px
+    promptText = `Great! Please modify this image according to the following instructions: ${instruction}
+    Keep rest as it is.
 
 Important guidelines:
 - Make sure the design language remains intact
