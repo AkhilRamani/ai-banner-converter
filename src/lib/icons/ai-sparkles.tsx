@@ -1,5 +1,7 @@
-export const AiSparklesIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" className="-mr-0.5">
+import { cn } from "../utils";
+
+export const AiSparklesIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" className={cn("-mr-0.5", className)}>
     <path
       fill="currentColor"
       fillRule="evenodd"

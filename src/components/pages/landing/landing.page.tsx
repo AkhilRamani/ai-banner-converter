@@ -64,7 +64,7 @@ export const LandingPage = () => {
 
       <FutureTeaseSection />
 
-      <TestimonialsSection />
+      {/* <TestimonialsSection /> */}
 
       <PricingSection />
 
