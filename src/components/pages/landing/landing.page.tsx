@@ -11,6 +11,7 @@ import { SolutionSection } from "./solution-section";
 import { TestimonialsSection } from "./testimonials-section";
 import { FutureTeaseSection } from "./future-tease-section";
 import { ProblemSection } from "./problem-section";
+import { CtaSection } from "./cta-section";
 
 export const LandingPage = () => {
   return (
@@ -69,22 +70,7 @@ export const LandingPage = () => {
       <PricingSection />
 
       {/* Final CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center text-white bg-black py-14 rounded-4xl">
-          <h2 className="text-3xl sm:text-4xl font-medium mb-4">Turn one design into every format — in seconds.</h2>
-          <p className="text-lg mb-12 opacity-90">Trusted by designers, agencies, and marketing teams to automate campaign resizing.</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/home">
-              <ButtonCustom variant="outline" className="bg-white text-neutral-900 hover:bg-neutral-50 px-8 py-4">
-                Start Free
-              </ButtonCustom>
-            </Link>
-            <ButtonCustom variant="outline" className="border-white hover:bg-white/10 px-8 py-4">
-              Join Early Access
-            </ButtonCustom>
-          </div>
-        </div>
-      </section>
+      <CtaSection />
 
       <Footer />
     </div>

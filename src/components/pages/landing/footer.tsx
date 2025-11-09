@@ -29,11 +29,10 @@ export function Footer() {
             <Link href="/" className="flex items-center space-x-2 mb-4">
               <div className="h-5 w-5 bg-gradient-to-tr from-primary to-primary/40 rounded-full" />
               <span className="font-semibold text-xl">
-                Flexel
+                Loomix
                 <span className="font-medium text-lg opacity-50">.app</span>
               </span>
             </Link>
-            <p className="text-sm text-muted-foreground mb-4 max-w-sm">Resolve visa confusion in minutes</p>
           </div>
 
           {/* Links columns */}
@@ -53,32 +52,9 @@ export function Footer() {
           ))}
         </div>
 
-        {/* Contact information */}
-        <div className="border-t border-border/40 mt-8 pt-8 pb-4">
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-16 justify-center items-center text-sm text-muted-foreground">
-            <div className="flex items-center space-x-2">
-              <Mail size={16} />
-              <a href="mailto:contact@visaiq.app" className="hover:text-primary transition-colors">
-                contact@flexel.app
-              </a>
-            </div>
-            <div className="flex items-center space-x-2">
-              <MapPin size={16} />
-              <span>Sydney, NSW 2000</span>
-            </div>
-          </div>
-        </div>
-
         {/* Copyright */}
         <div className="border-t border-border/40 mt-4 pt-6 text-center text-sm text-muted-foreground">
-          <p>© {currentYear} VisaIQ. All rights reserved.</p>
-          <p className="mt-2">
-            <span className="flex items-center justify-center space-x-1">
-              <span>Built with</span>
-              <span className="text-red-500">❤</span>
-              <span>for global citizens</span>
-            </span>
-          </p>
+          <p>© {currentYear} Loomix. All rights reserved.</p>
         </div>
       </div>
     </footer>
