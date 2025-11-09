@@ -28,7 +28,7 @@ export const SolutionSection = () => {
   ];
 
   return (
-    <section className="relative overflow-hidden py-28 px-4 sm:px-6 lg:px-8 bg-white">
+    <section id="features" className="relative overflow-hidden py-28 px-4 sm:px-6 lg:px-8 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Heading */}
         <div className="text-center mb-10 sm:mb-14">
@@ -37,7 +37,7 @@ export const SolutionSection = () => {
             Smart, fast, on-brand
           </div>
 
-          <h2 className="mt-6 text-balance text-4xl sm:text-5xl font-medium tracking-tight">
+          <h2 className="mt-6 text-balance text-2xl md:text-4xl font-medium">
             <span className="bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-900 bg-clip-text text-transparent">
               Meet your AI Design Resizer
             </span>
@@ -65,7 +65,7 @@ export const SolutionSection = () => {
             return (
               <div
                 key={index}
-                className="group relative rounded-2xl border border-neutral-200/80 bg-white/70 p-6 shadow-sm backdrop-blur transition-shadow hover:shadow-lg"
+                className="group relative rounded-2xl border border-neutral-200/80 bg-white/70 p-6 backdrop-blur transition-shadow hover:shadow-sm"
               >
                 <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-neutral-300 to-transparent" />
                 <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-neutral-700 transition-colors group-hover:bg-neutral-900 group-hover:text-white">

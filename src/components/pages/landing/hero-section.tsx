@@ -1,6 +1,6 @@
 import { ButtonCustom } from "@/components/ui/custom/button-custom";
 import { AiSparklesIcon } from "@/lib/icons/ai-sparkles";
-import { Sparkles, Play } from "lucide-react";
+import { Sparkles, Play, Sparkle } from "lucide-react";
 import Link from "next/link";
 
 export const HeroSection = () => {
@@ -10,11 +10,12 @@ export const HeroSection = () => {
         <div className="flex flex-col items-center mt-14">
           <div className="max-w-2/3 flex flex-col text-center items-center">
             <div className="mb-6">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-neutral-100 text-neutral-800">
-                <Sparkles className="w-4 h-4 mr-2" />
-                AI-Powered Design Resizing
-              </span>
+              <div className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white/80 px-3 py-1 text-sm text-neutral-600 shadow-sm backdrop-blur">
+                <Sparkles className="size-4 fill-emerald-500 animate-pulse stroke-0" />
+                AI-Powered Design Accelerator
+              </div>
             </div>
+
             <h1 className="text-4xl sm:text-4xl lg:text-5xl font-medium text-neutral-900 mb-6 leading-tight-">
               One Design.
               <br />
