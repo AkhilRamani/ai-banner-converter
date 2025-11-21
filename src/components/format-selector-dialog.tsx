@@ -50,7 +50,9 @@ const FormatCard = ({ formFactor, isSelected, isConverted, onToggle, className }
 
       {isConverted && (
         <div className="absolute z-10 top-1 left-1">
-          <div className="bg-green-500 text-white text-xs px-1 py-0.5 rounded">✓</div>
+          <div className="bg-green-500 text-white px-1 py-1 rounded">
+            <Check className="size-4" />
+          </div>
         </div>
       )}
 
@@ -179,12 +181,12 @@ export function FormatSelectorDialog({
               <div key={platform} className="space-y-6 grow pb-8">
                 <div className="flex items-center justify-between">
                   <h3 className="flex items-center gap-2 text-base font-medium text-gray-900">
-                    <PlatformIcon platform={platform} className="opacity-50 size-5" />
+                    <PlatformIcon platform={platform} className="opacity-50 size-4.5" />
                     {platform}
                   </h3>
                   <div className="flex items-center gap-2">
                     {selectedCount > 0 && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs font-normal">
                         {selectedCount} selected
                       </Badge>
                     )}
