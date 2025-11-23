@@ -90,7 +90,8 @@ Never leave large empty spaces and try to organise, expand or shrink objects, el
 
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-image",
+    // model: "gemini-2.5-flash-image",
+    model: "gemini-3-pro-image-preview",
     contents: prompt,
     config: {
       responseModalities: ["IMAGE"],
@@ -193,7 +194,8 @@ Please apply these modifications while maintaining the overall quality and coher
 
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-image",
+    // model: "gemini-2.5-flash-image",
+    model: "gemini-3-pro-image-preview",
     contents: prompt,
   });
 
