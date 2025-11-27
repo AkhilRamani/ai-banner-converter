@@ -58,13 +58,17 @@ export const convertImageAspectRatio = async (sourceImageFile: File, options: Co
   }
 
   // Build base prompt
-  const basePrompt = `Can you analyse first marketing cover image and convert that into attached second picture as the reference for final aspect ratio. Use second image as a template to fill in.
-I want to change aspect ratio of original image as graphics designer would design it for ${options.targetFormat}.
-Make sure design language and feel remains intact, prefer to avoid blank spaces and feel free to move around objects as needed without breaking original design identity.
+  // const basePrompt = `Can you analyse first marketing cover image and convert that into attached second picture as the reference for final aspect ratio. Stictly use second image as a template to fill in.
+  // I want to change aspect ratio of original image as graphics designer would design it for ${options.targetFormat}.
+  const basePrompt = `Analyse first cover image and convert that into attached second picture as the reference for final aspect ratio. Use second image as a template to fill in. Do not give bigger image than target image.
+I want to change aspect ratio of original image as graphics designer would design it.
+Design language and feel should remains intact, prefer to avoid blank spaces and feel free to move around objects as needed without breaking original design identity.
 If source and target image differs in vertical and horizontal then try to organise objects in target image space, example vertically or horizontally.
 Do not duplicate texts. Keep proper consistant spacing around texts for visual balance. Remove text line breaks and extend when needed to fill extra space.
 Understand the image content composition and try to keep the same feel as original. Prefer to do not destruct or modify main objects but organise to utilize available space and minimise empty same color areas without repeating.
-Never leave large empty spaces and try to organise, expand or shrink objects, elements in such a way that never happens. Prefer not to remove any elements as far as possible.`;
+Never leave large empty spaces and try to organise, expand or shrink objects, elements in such a way that never happens. Prefer not to remove any elements as far as possible.
+Keep consistent spacing around edges of image as original depending on availabe space in target image.
+`;
 
   // Add custom message if provided
   const finalPrompt = options.customMessage ? `${basePrompt}\n\nAdditional instructions: ${options.customMessage}` : basePrompt;
@@ -90,12 +94,11 @@ Never leave large empty spaces and try to organise, expand or shrink objects, el
 
   const ai = getAI();
   const response = await ai.models.generateContent({
-    // model: "gemini-2.5-flash-image",
-    model: "gemini-3-pro-image-preview",
+    model: "gemini-2.5-flash-image",
+    // model: "gemini-3-pro-image-preview",
     contents: prompt,
     config: {
       responseModalities: ["IMAGE"],
-      // // @ts-ignore
       // imageConfig: {
       //   aspectRatio: options.targetFormat,
       // },
