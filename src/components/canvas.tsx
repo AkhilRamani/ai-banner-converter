@@ -13,6 +13,7 @@ import { PlaceholderBox } from "./placeholder-box";
 import { PlatformIcon } from "./shared/platform-icon";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { useCreditCheck } from "@/providers/credit-provider";
 
 interface CanvasProps {
   conversion?: Doc<"conversions"> & { signedUrl?: string };
@@ -34,6 +35,7 @@ export function Canvas({ conversion, conversionResults }: CanvasProps = {}) {
     conversionResults,
   });
 
+  const { checkCredits } = useCreditCheck();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Mutation for deleting conversion results
@@ -120,9 +122,21 @@ export function Canvas({ conversion, conversionResults }: CanvasProps = {}) {
                     isConverting={processingFormats.has(formFactor.name)}
                     isRetrying={processingFormats.has(formFactor.name)}
                     onDownload={() => downloadImage(formFactor.name)}
-                    onConvert={() => convertFormat(formFactor.name)}
-                    onRetry={() => convertFormat(formFactor.name, { retry: true, conversionResultId: localResult.conversionResultId })}
-                    onRetryWithMessage={(message) => retryConversionWithMessage(formFactor.name, localResult.conversionResultId, message)}
+                    onConvert={() => {
+                      if (checkCredits(1)) {
+                        convertFormat(formFactor.name);
+                      }
+                    }}
+                    onRetry={() => {
+                      if (checkCredits(1)) {
+                        convertFormat(formFactor.name, { retry: true, conversionResultId: localResult.conversionResultId });
+                      }
+                    }}
+                    onRetryWithMessage={(message) => {
+                      if (checkCredits(1)) {
+                        retryConversionWithMessage(formFactor.name, localResult.conversionResultId, message);
+                      }
+                    }}
                     onDelete={async () => {
                       if (localResult?.conversionResultId) {
                         await deleteConversionResultMutation({ formatId: localResult.conversionResultId as any });
@@ -154,7 +168,7 @@ export function Canvas({ conversion, conversionResults }: CanvasProps = {}) {
         selectedFormats={selectedFormats}
         convertedFormats={convertedFormats}
         onFormatToggle={handleFormatToggle}
-        onSelectComplete={() => {}}
+        onSelectComplete={() => { }}
         onBatchFormatUpdate={handleBatchFormatUpdate}
         externalOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}

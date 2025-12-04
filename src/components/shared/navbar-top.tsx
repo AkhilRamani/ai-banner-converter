@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/compon
 import { Wand2, Wand, User, LogOut } from "lucide-react";
 import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import { DropdownMenuItemCustom } from "../ui/custom/dropdown-menu-custom";
+import { CreditDisplay } from "../credit-display";
 
 export function NavbarTop() {
   const { user, signOut } = useAuth();
@@ -37,37 +38,40 @@ export function NavbarTop() {
                   <Button size="sm">Sign In</Button>
                 </Link>
               ) : (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-2 px-0.5 rounded-full cursor-pointer hover:bg-neutral-300">
-                      <Avatar className="size-8">
-                        {user.profilePictureUrl && <AvatarImage src={user.profilePictureUrl} alt="User" />}
-                        <AvatarFallback className="text-xs text-primary bg-muted-foreground/20">
-                          {user.firstName?.charAt(0)}
-                          {user.lastName?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="min-w-64 mt-2 rounded-xl">
-                    <DropdownMenuItemCustom asChild>
-                      <Link href="/home" className="flex items-center gap-2">
-                        <Wand2 className="w-4 h-4" />
-                        Convert
-                      </Link>
-                    </DropdownMenuItemCustom>
-                    <DropdownMenuItemCustom asChild>
-                      <Link href="/profile" className="flex items-center gap-2">
-                        <User className="w-4 h-4" />
-                        Profile
-                      </Link>
-                    </DropdownMenuItemCustom>
-                    <DropdownMenuItemCustom onClick={async () => await signOut()}>
-                      <LogOut className="w-4 h-4" />
-                      Logout
-                    </DropdownMenuItemCustom>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex gap-3">
+                  <CreditDisplay />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="flex items-center gap-2 px-0.5 rounded-full cursor-pointer hover:bg-neutral-300">
+                        <Avatar className="size-8">
+                          {user.profilePictureUrl && <AvatarImage src={user.profilePictureUrl} alt="User" />}
+                          <AvatarFallback className="text-xs text-primary bg-muted-foreground/20">
+                            {user.firstName?.charAt(0)}
+                            {user.lastName?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-64 mt-2 rounded-xl">
+                      <DropdownMenuItemCustom asChild>
+                        <Link href="/home" className="flex items-center gap-2">
+                          <Wand2 className="w-4 h-4" />
+                          Convert
+                        </Link>
+                      </DropdownMenuItemCustom>
+                      <DropdownMenuItemCustom asChild>
+                        <Link href="/profile" className="flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          Profile
+                        </Link>
+                      </DropdownMenuItemCustom>
+                      <DropdownMenuItemCustom onClick={async () => await signOut()}>
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </DropdownMenuItemCustom>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               )}
             </div>
           </div>

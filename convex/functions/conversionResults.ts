@@ -55,6 +55,8 @@ export const getConversionResultsWithSignedUrls = query({
   },
 });
 
+import { deductCredits } from "../lib/creditHelpers";
+
 // Create a new conversion result
 export const createConversionResult = mutation({
   args: {
@@ -66,13 +68,55 @@ export const createConversionResult = mutation({
     const userId = await requireAuth(ctx);
     const now = Date.now();
 
-    return await ctx.db.insert("conversionResults", {
+    // Create conversion result first (to get ID for transaction)
+    const resultId = await ctx.db.insert("conversionResults", {
       conversionId: args.conversionId,
       platform: args.platform,
       format: args.format,
       status: "pending",
       updatedAt: now,
     });
+
+    try {
+      // Deduct credits using reusable helper
+      await deductCredits(ctx, userId, "image_conversion");
+    } catch (error) {
+      // If credit deduction fails, delete the conversion result
+      await ctx.db.delete(resultId);
+      throw error;
+    }
+
+    return resultId;
+  },
+});
+
+// Add a function to handle failed conversions with refunds
+export const markConversionFailed = mutation({
+  args: {
+    formatId: v.id("conversionResults"),
+    shouldRefund: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+    const formatResult = await ctx.db.get(args.formatId);
+
+    if (!formatResult) {
+      throw new Error("Format result not found");
+    }
+
+    await requireConversionOwnership(ctx, formatResult.conversionId);
+
+    // Update status to failed
+    await ctx.db.patch(args.formatId, {
+      status: "failed",
+      updatedAt: Date.now(),
+    });
+
+    // Optionally refund credits
+    if (args.shouldRefund) {
+      const { refundConversion } = await import("../lib/creditHelpers");
+      await refundConversion(ctx, userId, args.formatId);
+    }
   },
 });
 
@@ -83,9 +127,10 @@ export const updateConversionResult = mutation({
     status: v.optional(formatResultStatusValidator),
     width: v.optional(v.number()),
     height: v.optional(v.number()),
+    deductCredit: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const { formatId, ...updates } = args;
+    const { formatId, deductCredit, ...updates } = args;
     // Get the format result to verify ownership
     const formatResult = await ctx.db.get(formatId);
     if (!formatResult) {
@@ -93,7 +138,11 @@ export const updateConversionResult = mutation({
     }
 
     // Verify the user owns the conversion this format result belongs to
-    await requireConversionOwnership(ctx, formatResult.conversionId);
+    const { userId } = await requireConversionOwnership(ctx, formatResult.conversionId);
+
+    if (deductCredit) {
+      await deductCredits(ctx, userId, "image_conversion");
+    }
 
     await ctx.db.patch(formatId, {
       ...updates,

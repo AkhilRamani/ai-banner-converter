@@ -9,9 +9,14 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as crons from "../crons.js";
 import type * as functions_conversionResults from "../functions/conversionResults.js";
 import type * as functions_conversions from "../functions/conversions.js";
+import type * as functions_creditResets from "../functions/creditResets.js";
+import type * as functions_plans from "../functions/plans.js";
+import type * as functions_users from "../functions/users.js";
 import type * as functions from "../functions.js";
+import type * as lib_creditHelpers from "../lib/creditHelpers.js";
 import type * as r2 from "../r2.js";
 
 import type {
@@ -30,9 +35,14 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  crons: typeof crons;
   "functions/conversionResults": typeof functions_conversionResults;
   "functions/conversions": typeof functions_conversions;
+  "functions/creditResets": typeof functions_creditResets;
+  "functions/plans": typeof functions_plans;
+  "functions/users": typeof functions_users;
   functions: typeof functions;
+  "lib/creditHelpers": typeof lib_creditHelpers;
   r2: typeof r2;
 }>;
 declare const fullApiWithMounts: typeof fullApi;

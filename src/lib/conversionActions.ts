@@ -164,6 +164,7 @@ export async function retryOrEditWithConvex(
     status: "completed",
     width: options.targetWidth,
     height: options.targetHeight,
+    deductCredit: true,
   });
 
   return {
